@@ -1,0 +1,24 @@
+{
+  "name": "@tunefour/client",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json && electron .",
+    "start": "electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@tunefour/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@tunefour/config": "workspace:*",
+    "@types/node": "^22.10.2",
+    "electron": "^33.2.1",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,12 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Native postinstall scripts are not auto-run by default (pnpm supply-chain safety).
+# `electron` downloads a ~100MB runtime binary — enable it on the dev/build machine that
+# actually runs the kiosk. `sharp` is an optional Next.js image dep (built-in optimizer
+# works without it). Flip electron to true locally when you want to run `pnpm --filter
+# @tunefour/client dev`.
+allowBuilds:
+  electron: false
+  sharp: false

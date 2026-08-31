@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — ORM / Migration Tool Comparison</title>
+    <style>
+      :root {
+        --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2740;
+        --text: #e7ecf3; --muted: #9fb0c9; --accent: #6ea8fe; --accent-2: #7ee0c0;
+        --warn: #ffd479; --border: #2a3652; --code-bg: #0b101b; --radius: 12px; --maxw: 1100px;
+        --win: #143026; --win-border: #2e6b4f;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+      code { background: var(--code-bg); border: 1px solid var(--border); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.86em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; overflow-x: auto; font-size: 0.84em; line-height: 1.5; }
+      pre code { background: none; border: none; padding: 0; }
+
+      header.hero { padding: 52px 24px 36px; text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border); }
+      header.hero h1 { font-size: 2.2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 720px; margin: 6px auto; }
+      .pill { display: inline-block; margin-top: 14px; padding: 6px 14px; background: var(--panel-2);
+        border: 1px solid var(--border); border-radius: 999px; color: var(--accent-2); font-size: 0.82rem; }
+
+      main { max-width: var(--maxw); margin: 0 auto; padding: 32px 24px 80px; }
+      section { margin-bottom: 40px; scroll-margin-top: 20px; }
+      h2 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+      h3 { font-size: 1.12rem; margin: 22px 0 6px; color: var(--accent-2); }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin: 16px 0; }
+      .bridge, .why, .note { border-left: 3px solid var(--accent); background: var(--panel-2);
+        border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.95rem; }
+      .bridge { border-color: var(--accent-2); }
+      .note { border-color: var(--warn); }
+      .label { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+
+      .links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .links a { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-2);
+        border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text); }
+      .links a:hover { border-color: var(--accent); text-decoration: none; }
+      .links a::before { content: "↗"; color: var(--accent); font-size: 0.8em; }
+
+      table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+      .good { color: var(--accent-2); }
+      .bad { color: #ff9a9a; }
+      .mid { color: var(--warn); }
+
+      .verdict { background: var(--win); border: 1px solid var(--win-border); border-radius: var(--radius); padding: 20px 22px; margin: 18px 0; }
+      .verdict h3 { color: var(--accent-2); margin-top: 0; }
+      .badge { display:inline-block; font-size:0.72rem; padding:3px 10px; border-radius:999px; border:1px solid var(--border); color:var(--muted); margin-left:8px; vertical-align:middle; }
+      .rec { border-color: var(--win-border); color: var(--accent-2); }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      ul.tight { margin: 6px 0; } ul.tight li { margin: 3px 0; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>ORM &amp; Migration Tool — Decision</h1>
+      <p>Choosing how the NestJS server talks to PostgreSQL for Tunefour. Compares
+        <b>Prisma</b>, <b>Drizzle</b>, and <b>TypeORM</b> against our needs.</p>
+      <span class="pill">Recommendation: Prisma ✅ (rationale below)</span>
+    </header>
+
+    <main>
+      <!-- WHAT / WHY -->
+      <section id="background">
+        <h2>What we're deciding, and the vocabulary</h2>
+        <p>Our source of truth is <b>PostgreSQL</b> (a SQL database). The server needs to read and
+          write it from TypeScript. Two related jobs:</p>
+        <div class="card">
+          <ul class="tight">
+            <li><b>ORM (Object–Relational Mapper):</b> lets you work with database rows as
+              TypeScript objects instead of hand-writing SQL strings. You call
+              <code>db.device.findMany()</code> and it generates the SQL, runs it, and gives you
+              typed results.</li>
+            <li><b>Migrations:</b> version-controlled, incremental changes to the database
+              <em>structure</em> (add a table, add a column). Like Git commits for your schema —
+              so every environment (your laptop, CI, production) can be brought to the same shape
+              reproducibly. All three tools handle this.</li>
+          </ul>
+        </div>
+        <div class="bridge">
+          <span class="label">Coming from raw Node + SQL</span>
+          If you've written <code>pg.query("SELECT * FROM ...")</code> by hand, an ORM removes the
+          stringly-typed SQL and the manual mapping of rows to objects — and gives you
+          autocomplete + compile-time checking on your queries. You can still drop to raw SQL when
+          you need to.
+        </div>
+      </section>
+
+      <!-- CRITERIA -->
+      <section id="criteria">
+        <h2>What matters for Tunefour</h2>
+        <p>Weighted by our actual situation: a solo/small team, <b>you are learning the stack</b>,
+          NestJS + Postgres, and a schema that will grow (offices, devices, playlists, schedules,
+          users, audit logs).</p>
+        <table>
+          <tr><th>Criterion</th><th>Why it matters here</th></tr>
+          <tr><td>Type-safety</td><td>The whole reason we use TypeScript — queries should be checked at compile time, results fully typed.</td></tr>
+          <tr><td>Learning curve &amp; docs</td><td>You're new to TS/ORMs; great docs and a gentle path shorten every phase.</td></tr>
+          <tr><td>Migrations</td><td>Schema will change often through the phases; migrations must be painless and safe.</td></tr>
+          <tr><td>NestJS fit</td><td>Server is NestJS; integration should be clean.</td></tr>
+          <tr><td>Raw-SQL escape hatch</td><td>For the schedule-flattening query and reports, we may want hand-tuned SQL.</td></tr>
+          <tr><td>Maturity / community</td><td>More users = more answers when you're stuck.</td></tr>
+        </table>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- PRISMA -->
+      <section id="prisma">
+        <h2>Prisma <span class="badge rec">Recommended</span></h2>
+        <p>You define your data model in a dedicated <code>schema.prisma</code> file (its own small
+          language). Prisma generates a fully typed client and manages migrations from that schema.</p>
+        <pre><code>// schema.prisma — the single source of truth for your data model
+model Device {
+  id        String   @id @default(uuid())
+  name      String
+  office    Office   @relation(fields: [officeId], references: [id])
+  officeId  String
+  createdAt DateTime @default(now())
+}</code></pre>
+        <pre><code>// Fully typed query — autocomplete on every field, typed result:
+const devices = await prisma.device.findMany({ where: { officeId } });</code></pre>
+        <h3>Strengths</h3>
+        <ul class="tight">
+          <li><span class="good">Best-in-class developer experience &amp; docs</span> — the schema
+            is readable, errors are clear, and the guides are excellent for newcomers.</li>
+          <li><span class="good">Excellent migrations</span> — <code>prisma migrate dev</code> diffs
+            your schema and writes the SQL migration for you; <code>prisma studio</code> is a free
+            GUI to browse data.</li>
+          <li><span class="good">Strong type-safety</span> without you writing the types.</li>
+          <li><span class="good">First-class NestJS recipe</span> in the official Nest docs.</li>
+        </ul>
+        <h3>Trade-offs</h3>
+        <ul class="tight">
+          <li><span class="mid">Separate schema language</span> (not plain TS) — one more small
+            syntax to learn, though it's simple and well-documented.</li>
+          <li><span class="mid">Some very advanced/complex SQL</span> is done via its
+            <code>$queryRaw</code> escape hatch rather than the fluent API.</li>
+        </ul>
+        <div class="links">
+          <a href="https://www.prisma.io/docs/getting-started">Getting started</a>
+          <a href="https://docs.nestjs.com/recipes/prisma">NestJS + Prisma recipe</a>
+          <a href="https://www.prisma.io/docs/orm/prisma-migrate">Migrations</a>
+        </div>
+      </section>
+
+      <!-- DRIZZLE -->
+      <section id="drizzle">
+        <h2>Drizzle <span class="badge">Strong alternative</span></h2>
+        <p>A lightweight, "SQL-first" ORM. You define the schema in <b>plain TypeScript</b>, and its
+          query builder mirrors SQL closely. Types are inferred — no code generation step at runtime.</p>
+        <pre><code>// schema in plain TypeScript
+export const devices = pgTable('devices', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  officeId: uuid('office_id').references(() =&gt; offices.id),
+});
+
+// query builder reads like SQL:
+const rows = await db.select().from(devices).where(eq(devices.officeId, officeId));</code></pre>
+        <h3>Strengths</h3>
+        <ul class="tight">
+          <li><span class="good">Very close to SQL</span> — if you like knowing exactly what query
+            runs, there's little "magic." Great for the hand-tuned schedule query.</li>
+          <li><span class="good">Lightweight &amp; fast</span>, schema is just TypeScript, excellent
+            inferred types.</li>
+        </ul>
+        <h3>Trade-offs</h3>
+        <ul class="tight">
+          <li><span class="mid">Steeper if you <em>don't</em> already know SQL well</span> — it
+            assumes more SQL fluency, which is a bigger ask while you're also learning TS.</li>
+          <li><span class="mid">Younger ecosystem</span> than Prisma/TypeORM (growing fast, but
+            fewer tutorials/answers).</li>
+        </ul>
+        <div class="links">
+          <a href="https://orm.drizzle.team/docs/overview">Drizzle docs</a>
+          <a href="https://orm.drizzle.team/docs/get-started/postgresql-new">Get started (Postgres)</a>
+          <a href="https://orm.drizzle.team/docs/kit-overview">Migrations (drizzle-kit)</a>
+        </div>
+      </section>
+
+      <!-- TYPEORM -->
+      <section id="typeorm">
+        <h2>TypeORM <span class="badge">The classic</span></h2>
+        <p>The long-standing Node ORM. Uses <b>decorators on classes</b> to define entities — the
+          same decorator style as NestJS itself, so it feels native to Nest.</p>
+        <pre><code>@Entity()
+export class Device {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() name: string;
+  @ManyToOne(() =&gt; Office) office: Office;
+}</code></pre>
+        <h3>Strengths</h3>
+        <ul class="tight">
+          <li><span class="good">Stylistically matches NestJS</span> (decorators/classes); it's the
+            ORM used in Nest's own database docs.</li>
+          <li><span class="good">Mature, feature-rich</span>, large community.</li>
+        </ul>
+        <h3>Trade-offs</h3>
+        <ul class="tight">
+          <li><span class="bad">Weaker type-safety</span> than Prisma/Drizzle — some queries return
+            loosely-typed results.</li>
+          <li><span class="bad">Migrations &amp; some behaviours have historically been finicky</span>
+            (auto-generation quirks, sharp edges), which is rough while you're learning.</li>
+        </ul>
+        <div class="links">
+          <a href="https://typeorm.io/">TypeORM docs</a>
+          <a href="https://docs.nestjs.com/techniques/database">NestJS + TypeORM</a>
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- MATRIX -->
+      <section id="matrix">
+        <h2>At a glance</h2>
+        <table>
+          <tr>
+            <th>Criterion</th><th>Prisma</th><th>Drizzle</th><th>TypeORM</th>
+          </tr>
+          <tr><td>Type-safety</td><td class="good">Excellent</td><td class="good">Excellent</td><td class="mid">Good</td></tr>
+          <tr><td>Learning curve (new to stack)</td><td class="good">Gentle</td><td class="mid">Medium (needs SQL)</td><td class="mid">Medium</td></tr>
+          <tr><td>Docs &amp; tutorials</td><td class="good">Outstanding</td><td class="mid">Good, growing</td><td class="mid">Good, dated in places</td></tr>
+          <tr><td>Migrations</td><td class="good">Auto-generated, smooth</td><td class="good">Solid (drizzle-kit)</td><td class="bad">Workable, quirky</td></tr>
+          <tr><td>NestJS fit</td><td class="good">Official recipe</td><td class="good">Clean (provider)</td><td class="good">Native decorator style</td></tr>
+          <tr><td>Raw-SQL escape hatch</td><td class="good">Yes (<code>$queryRaw</code>)</td><td class="good">Yes (SQL-first)</td><td class="good">Yes</td></tr>
+          <tr><td>Schema defined in</td><td>Prisma schema file</td><td>Plain TypeScript</td><td>Class decorators</td></tr>
+          <tr><td>Maturity / community</td><td class="good">Large</td><td class="mid">Newer, fast-growing</td><td class="good">Large, older</td></tr>
+        </table>
+      </section>
+
+      <!-- VERDICT -->
+      <section id="verdict">
+        <h2>Recommendation</h2>
+        <div class="verdict">
+          <h3>Use Prisma for Tunefour ✅</h3>
+          <p>Given that <b>you're learning the stack</b>, Prisma wins on the two criteria that
+            matter most right now: <b>gentlest learning curve</b> and <b>outstanding docs</b>,
+            while still giving excellent type-safety and the smoothest migration workflow. Its
+            official NestJS recipe means Phase 1 integration is a well-trodden path, and
+            <code>prisma studio</code> gives you a free GUI to <em>see</em> your data as you build —
+            a real help while the schema is forming in your head.</p>
+          <p style="margin-bottom:0"><b>When we'd reconsider:</b> if we later hit a
+            performance-critical query the fluent API handles awkwardly, we use Prisma's raw-SQL
+            hatch for that one query — no need to switch tools. If this were a SQL-expert team
+            optimizing for minimal abstraction, <b>Drizzle</b> would be the pick. <b>TypeORM</b>
+            only if we specifically wanted the decorator-native Nest style and accepted weaker
+            typing.</p>
+        </div>
+        <div class="note">
+          <span class="label">Decision status</span>
+          Proposed — pending your approval. Once confirmed, Phase 1 begins with the Prisma schema
+          for the core entities + the first migration.
+        </div>
+      </section>
+
+      <div class="foot">
+        Tunefour · ORM decision doc · pairs with <code>IMPLEMENTATION_PLAN.md</code> Phase 1
+      </div>
+    </main>
+  </body>
+</html>

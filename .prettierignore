@@ -1,0 +1,12 @@
+# Build outputs & artifacts (not source — don't format)
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+.turbo/
+
+# Generated / lockfiles
+pnpm-lock.yaml
+*.tsbuildinfo

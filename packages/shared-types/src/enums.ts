@@ -8,6 +8,13 @@ export const AssetType = {
 } as const;
 export type AssetType = (typeof AssetType)[keyof typeof AssetType];
 
+/** Transition effect played between playlist items. */
+export const Transition = {
+  None: 'none',
+  Fade: 'fade',
+} as const;
+export type Transition = (typeof Transition)[keyof typeof Transition];
+
 export const DeviceStatus = {
   Online: 'online',
   Offline: 'offline',

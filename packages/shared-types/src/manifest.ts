@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AssetType, Transition, Orientation } from './enums';
 
 /**
  * The desired-state manifest: the server's instruction sheet for ONE device.
@@ -8,7 +9,7 @@ import { z } from 'zod';
 
 export const ManifestAssetSchema = z.object({
   assetId: z.string().uuid(),
-  type: z.enum(['image', 'video', 'html', 'url']),
+  type: z.nativeEnum(AssetType),
   /** Short-lived signed URL for media; may be a remote URL for `url` type. */
   url: z.string().url(),
   /** SHA-256 of the asset bytes; client verifies before caching/displaying. */
@@ -21,7 +22,7 @@ export const ManifestItemSchema = z.object({
   assetId: z.string().uuid(),
   order: z.number().int().nonnegative(),
   durationSec: z.number().int().positive(),
-  transition: z.enum(['none', 'fade']).default('none'),
+  transition: z.nativeEnum(Transition).default(Transition.None),
 });
 export type ManifestItem = z.infer<typeof ManifestItemSchema>;
 
@@ -43,7 +44,7 @@ export const DeviceManifestSchema = z.object({
   version: z.string(),
   generatedAt: z.string().datetime(),
   timezone: z.string(),
-  orientation: z.enum(['landscape', 'portrait']),
+  orientation: z.nativeEnum(Orientation),
   /** All assets referenced below, with signed URLs + checksums to pre-fetch. */
   assets: z.array(ManifestAssetSchema),
   /** The base loop played when no higher-priority schedule/interrupt applies. */

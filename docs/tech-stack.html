@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — Tech Stack Guide</title>
+    <style>
+      :root {
+        --bg: #0f1420;
+        --panel: #161d2e;
+        --panel-2: #1c2740;
+        --text: #e7ecf3;
+        --muted: #9fb0c9;
+        --accent: #6ea8fe;
+        --accent-2: #7ee0c0;
+        --warn: #ffd479;
+        --border: #2a3652;
+        --code-bg: #0b101b;
+        --radius: 12px;
+        --maxw: 1180px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre {
+        font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      }
+      code {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        padding: 0.1em 0.4em;
+        border-radius: 6px;
+        font-size: 0.86em;
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-size: 0.85em;
+        line-height: 1.5;
+      }
+      pre code { background: none; border: none; padding: 0; }
+
+      header.hero {
+        padding: 56px 24px 40px;
+        text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border);
+      }
+      header.hero h1 { font-size: 2.4rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 720px; margin: 6px auto; }
+      .pill {
+        display: inline-block; margin-top: 14px; padding: 6px 14px;
+        background: var(--panel-2); border: 1px solid var(--border);
+        border-radius: 999px; color: var(--accent-2); font-size: 0.82rem;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 40px;
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 32px 24px 80px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 24px;
+        align-self: start;
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--panel);
+        padding: 18px 18px;
+        font-size: 0.9rem;
+      }
+      nav.toc strong { display: block; color: var(--muted); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.08em; margin: 14px 0 6px; }
+      nav.toc strong:first-child { margin-top: 0; }
+      nav.toc a { display: block; color: var(--text); padding: 4px 8px; border-radius: 6px; }
+      nav.toc a:hover { background: var(--panel-2); text-decoration: none; }
+
+      main { min-width: 0; }
+      section { margin-bottom: 44px; scroll-margin-top: 20px; }
+      h2 {
+        font-size: 1.6rem; margin: 0 0 4px; letter-spacing: -0.01em;
+        padding-bottom: 8px; border-bottom: 1px solid var(--border);
+      }
+      h3 { font-size: 1.15rem; margin: 26px 0 6px; color: var(--accent-2); }
+      h2 .tag {
+        font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border);
+        border-radius: 999px; padding: 3px 10px; vertical-align: middle; margin-left: 10px;
+        font-weight: normal; letter-spacing: 0.02em;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px 22px;
+        margin: 16px 0;
+      }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        nav.toc { position: static; max-height: none; }
+        .grid2 { grid-template-columns: 1fr; }
+      }
+
+      .bridge, .why, .note {
+        border-left: 3px solid var(--accent);
+        background: var(--panel-2);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin: 14px 0;
+        font-size: 0.95rem;
+      }
+      .bridge { border-color: var(--accent-2); }
+      .bridge b, .why b, .note b { color: var(--text); }
+      .why { border-color: var(--accent); }
+      .note { border-color: var(--warn); }
+      .label {
+        display: inline-block; font-size: 0.7rem; text-transform: uppercase;
+        letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px;
+      }
+
+      .links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .links a {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--panel-2); border: 1px solid var(--border);
+        padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text);
+      }
+      .links a:hover { border-color: var(--accent); text-decoration: none; }
+      .links a::before { content: "↗"; color: var(--accent); font-size: 0.8em; }
+
+      table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92rem; }
+      th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+
+      .tree {
+        background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 18px; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 0.84rem; line-height: 1.7;
+      }
+      .tree .c { color: var(--muted); }
+      .tree .d { color: var(--accent); }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      .kbd { color: var(--accent-2); }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>Tunefour — Tech Stack Guide</h1>
+      <p>A friendly tour of every technology in this project, written for an experienced
+        developer who is new to this particular stack.</p>
+      <p>You already know: <b>Node.js, npm, nvm, ESLint</b>. This guide bridges from there to
+        everything else — TypeScript, pnpm, Turborepo, React, Next.js, NestJS, Electron,
+        Docker, Terraform — and shows how each maps to the files in this repo.</p>
+      <span class="pill">Use this project as your practice ground 🛠️</span>
+    </header>
+
+    <div class="layout">
+      <nav class="toc">
+        <strong>Start here</strong>
+        <a href="#big-picture">The big picture</a>
+        <a href="#learning-path">Suggested learning path</a>
+        <strong>Language &amp; tooling</strong>
+        <a href="#typescript">TypeScript</a>
+        <a href="#pnpm">pnpm</a>
+        <a href="#turbo">Turborepo</a>
+        <a href="#lint">ESLint &amp; Prettier</a>
+        <a href="#zod">Zod</a>
+        <strong>The applications</strong>
+        <a href="#react">React</a>
+        <a href="#nextjs">Next.js</a>
+        <a href="#nestjs">NestJS</a>
+        <a href="#electron">Electron</a>
+        <strong>Data &amp; infrastructure</strong>
+        <a href="#datastores">Postgres / Redis / Storage</a>
+        <a href="#docker">Docker</a>
+        <a href="#terraform">Terraform</a>
+        <strong>Putting it together</strong>
+        <a href="#folders">Folder structure</a>
+        <a href="#workflow">How it all runs</a>
+      </nav>
+
+      <main>
+        <!-- BIG PICTURE -->
+        <section id="big-picture">
+          <h2>The big picture</h2>
+          <p>Tunefour is a <b>monorepo</b>: several related applications and shared libraries
+            living in one Git repository, managed together. Here is how the pieces relate.</p>
+          <div class="card">
+            <pre>              ┌─────────────────────────── CLOUD ───────────────────────────┐
+  Admin      │   <b>Next.js</b> admin portal ──┐                                  │
+  (browser)  │                              ▼                                  │
+             │                     <b>NestJS</b> API + WebSocket  ── Postgres / Redis │
+             │                              │                     / Object store │
+             └──────────────────────────────┼──────────────────────────────────┘
+                                            │  (internet)
+             ┌──────────────────────────────┼──────────────────────────────────┐
+             │  Office mini-PC + TV          ▼                                   │
+             │   <b>Electron</b> kiosk app  ◄── pulls schedule, caches, plays offline│
+             └───────────────────────────────────────────────────────────────── ┘
+
+  Shared across all of the above:  <b>TypeScript</b> language · <b>pnpm</b> installs ·
+  <b>Turborepo</b> orchestrates builds · <b>packages/shared-types</b> holds common types
+  Local dev services (<b>Docker</b>): Postgres + Redis + MinIO   ·   Cloud infra (<b>Terraform</b>)</pre>
+          </div>
+          <p>Think in three groups, which is how the rest of this guide is organised:</p>
+          <ul>
+            <li><b>Language &amp; tooling</b> — the things every part of the codebase uses:
+              TypeScript, pnpm, Turborepo, ESLint/Prettier, Zod.</li>
+            <li><b>Applications</b> — the actual programs: a server (NestJS), web portals
+              (Next.js, built on React), and the TV client (Electron).</li>
+            <li><b>Data &amp; infrastructure</b> — where state lives and how we run/host it:
+              Postgres, Redis, object storage, Docker, Terraform.</li>
+          </ul>
+        </section>
+
+        <section id="learning-path">
+          <h2>Suggested learning path</h2>
+          <p>You don't need all of this at once. A sane order that matches how we'll build:</p>
+          <table>
+            <tr><th>#</th><th>Learn</th><th>Why now</th></tr>
+            <tr><td>1</td><td><a href="#typescript">TypeScript</a></td><td>The language everything is written in. Highest leverage — learn this first.</td></tr>
+            <tr><td>2</td><td><a href="#pnpm">pnpm</a> &amp; <a href="#turbo">Turborepo</a></td><td>How you install and build. You already know npm, so this is a short hop.</td></tr>
+            <tr><td>3</td><td><a href="#nestjs">NestJS</a></td><td>We build the server (Phase 1) first. It's Node — familiar ground.</td></tr>
+            <tr><td>4</td><td><a href="#react">React</a> → <a href="#nextjs">Next.js</a></td><td>For the admin portal. Learn React fundamentals before Next.js.</td></tr>
+            <tr><td>5</td><td><a href="#docker">Docker</a></td><td>To run Postgres/Redis locally without installing them by hand.</td></tr>
+            <tr><td>6</td><td><a href="#electron">Electron</a></td><td>The TV client (Phase 4). Comes later in the plan.</td></tr>
+            <tr><td>7</td><td><a href="#terraform">Terraform</a></td><td>Only when we deploy to the cloud (post-MVP). Safe to defer.</td></tr>
+          </table>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- TYPESCRIPT -->
+        <section id="typescript">
+          <h2>TypeScript <span class="tag">language</span></h2>
+          <p>TypeScript is <b>JavaScript with a type system</b>. You write almost the same code,
+            but you also <em>describe the shapes of your data</em> — and a compiler checks that
+            you use them consistently <em>before</em> the code ever runs. It compiles down to
+            plain JavaScript that Node/browsers execute.</p>
+          <div class="bridge">
+            <span class="label">Coming from JavaScript</span>
+            Everything you know still works. You're adding annotations like
+            <code>: string</code>, <code>: number</code>, and defining <code>interface</code>s /
+            <code>type</code>s. The payoff: your editor autocompletes everything, and typos
+            like <code>user.emial</code> become errors at build time instead of 2am bugs.
+          </div>
+          <pre><code>// JavaScript you know:
+function greet(user) { return "Hi " + user.name; }
+
+// TypeScript: describe the shape, get checking + autocomplete
+interface User { name: string; email: string; }
+function greet(user: User): string {
+  return "Hi " + user.name;      // user.namee → compile error
+}</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            The server, the web portals, and the TV client all share the same data shapes
+            (e.g. the <code>DeviceManifest</code> a server sends to a client). We define those
+            once in <code>packages/shared-types</code> and every app imports them — so if the
+            server changes a field, the client <em>won't compile</em> until it's updated. That
+            safety across a distributed system is the whole reason we use TypeScript.
+          </div>
+          <div class="links">
+            <a href="https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html">TS for JS programmers (5 min)</a>
+            <a href="https://www.typescriptlang.org/docs/handbook/intro.html">Official Handbook</a>
+            <a href="https://www.typescriptlang.org/play">Playground (try it live)</a>
+            <a href="https://www.totaltypescript.com/tutorials">Total TypeScript (free tutorials)</a>
+          </div>
+        </section>
+
+        <!-- PNPM -->
+        <section id="pnpm">
+          <h2>pnpm <span class="tag">package manager</span></h2>
+          <p>pnpm does the same job as <code>npm</code> — installs dependencies, runs scripts —
+            but faster and more disk-efficient, and it's excellent at <b>monorepos</b>.</p>
+          <div class="bridge">
+            <span class="label">Coming from npm</span>
+            The commands rhyme: <code>npm install</code> → <code>pnpm install</code>,
+            <code>npm run build</code> → <code>pnpm build</code>,
+            <code>npm install left-pad</code> → <code>pnpm add left-pad</code>.
+            Two differences that matter:
+            <ol style="margin:8px 0 0">
+              <li><b>One global store.</b> Each package version is downloaded <em>once</em> to a
+                shared store and hard-linked into projects — not re-copied every time. Big disk
+                + speed win.</li>
+              <li><b>Stricter.</b> Your code can only import packages you actually declared in
+                <code>package.json</code> (npm lets you accidentally use a dependency's
+                dependency). Fewer "works on my machine" surprises.</li>
+            </ol>
+          </div>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            <b>Workspaces.</b> Our <code>pnpm-workspace.yaml</code> declares
+            <code>apps/*</code> and <code>packages/*</code> as one linked workspace. That lets
+            <code>apps/server</code> depend on <code>"@tunefour/shared-types": "workspace:*"</code>
+            and pnpm links it to our <em>local</em> source — no publishing to a registry. This
+            is the glue that makes the monorepo work.
+          </div>
+          <div class="note">
+            <span class="label">You saw this already</span>
+            Remember the <code>allowBuilds</code> prompt during install? That's pnpm's
+            supply-chain safety: it won't run a dependency's install scripts (like Electron
+            downloading a binary) unless you approve it.
+          </div>
+          <div class="links">
+            <a href="https://pnpm.io/motivation">Why pnpm exists</a>
+            <a href="https://pnpm.io/pnpm-cli">CLI commands (npm → pnpm)</a>
+            <a href="https://pnpm.io/workspaces">Workspaces guide</a>
+          </div>
+        </section>
+
+        <!-- TURBO -->
+        <section id="turbo">
+          <h2>Turborepo <span class="tag">build orchestrator</span></h2>
+          <p>Turborepo (the <code>turbo</code> command) doesn't compile or bundle anything
+            itself. It's a <b>coordinator</b>: it decides <em>what</em> to run, <em>in what
+            order</em>, <em>in parallel</em>, and — crucially — <em>what to skip</em> because
+            nothing changed.</p>
+          <div class="bridge">
+            <span class="label">Coming from npm scripts</span>
+            With plain npm in a monorepo you'd write shell scripts to build package A before app
+            B, and everything rebuilds every time. Turbo reads a dependency graph and does this
+            for you, then <b>caches</b> results so a second build is near-instant.
+          </div>
+          <h3>The three ideas</h3>
+          <table>
+            <tr><th>Idea</th><th>What it means here</th></tr>
+            <tr><td>Task graph</td><td><code>"build": { "dependsOn": ["^build"] }</code> in <code>turbo.json</code> — the <code>^</code> means "build my dependencies first," so <code>shared-types</code> always builds before the apps that use it.</td></tr>
+            <tr><td>Parallelism</td><td>Apps that don't depend on each other build at the same time. That's why our full build finished in ~8 seconds.</td></tr>
+            <tr><td>Caching</td><td>Turbo hashes every input; if unchanged, it replays the cached output instead of rebuilding. You literally saw <code>cache hit, replaying logs</code> on the second build.</td></tr>
+          </table>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            With 5+ packages (and growing), running <code>pnpm build</code> / <code>lint</code> /
+            <code>typecheck</code> once at the root does the right thing everywhere, fast — no
+            hand-wired ordering.
+          </div>
+          <div class="links">
+            <a href="https://turborepo.com/docs">Turborepo docs</a>
+            <a href="https://turborepo.com/docs/crafting-your-repository">Core concepts</a>
+            <a href="https://turborepo.com/docs/crafting-your-repository/caching">How caching works</a>
+          </div>
+        </section>
+
+        <!-- ESLINT / PRETTIER -->
+        <section id="lint">
+          <h2>ESLint &amp; Prettier <span class="tag">code quality</span></h2>
+          <p>You know ESLint already. The one distinction worth nailing down is how it differs
+            from Prettier — they're often confused because both "clean up your code."</p>
+          <div class="grid2">
+            <div class="card">
+              <h3 style="margin-top:0">ESLint — correctness</h3>
+              <p>Catches <em>bugs and risky patterns</em>: unused variables, unsafe types,
+                bad practices. Our shared rules live in <code>packages/config</code> and every
+                package imports them via its <code>eslint.config.mjs</code>.</p>
+            </div>
+            <div class="card">
+              <h3 style="margin-top:0">Prettier — formatting</h3>
+              <p>Only reformats how code <em>looks</em> (quotes, indentation, line breaks) — never
+                logic. Config is <code>.prettierrc.json</code>. It ends all style debates and
+                keeps diffs clean.</p>
+            </div>
+          </div>
+          <div class="note">
+            <span class="label">They cooperate</span>
+            <code>eslint-config-prettier</code> (in our shared config) turns off ESLint's own
+            style rules so the two never fight over formatting.
+          </div>
+          <div class="links">
+            <a href="https://eslint.org/docs/latest/">ESLint docs</a>
+            <a href="https://prettier.io/docs/">Prettier docs</a>
+            <a href="https://prettier.io/docs/en/comparison">Why both (formatters vs linters)</a>
+          </div>
+        </section>
+
+        <!-- ZOD -->
+        <section id="zod">
+          <h2>Zod <span class="tag">runtime validation</span></h2>
+          <p>TypeScript types vanish at runtime (they're erased when compiled to JavaScript). So
+            when data arrives from the network, TypeScript can't check it — it just <em>trusts</em>
+            it. <b>Zod</b> fills that gap: you define a schema once, and get <em>both</em> a
+            runtime validator <em>and</em> a TypeScript type from it.</p>
+          <pre><code>import { z } from 'zod';
+
+const DeviceManifestSchema = z.object({
+  version: z.string(),
+  checksum: z.string().regex(/^[a-f0-9]{64}$/), // must be a SHA-256 hex
+});
+type DeviceManifest = z.infer&lt;typeof DeviceManifestSchema&gt;; // the TS type, for free
+
+// At runtime, verify untrusted input actually matches:
+const manifest = DeviceManifestSchema.parse(dataFromServer); // throws if malformed</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            The TV client must never render a corrupt/malformed manifest (that's the fail-safe
+            rule). It uses the Zod schema in <code>packages/shared-types/src/manifest.ts</code> to
+            validate every manifest before acting on it.
+          </div>
+          <div class="links">
+            <a href="https://zod.dev/">Zod docs</a>
+            <a href="https://zod.dev/?id=basic-usage">Basic usage</a>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- REACT -->
+        <section id="react">
+          <h2>React <span class="tag">UI library</span></h2>
+          <p>React is a library for building user interfaces out of <b>components</b> — reusable
+            functions that return markup. Instead of manually poking the DOM
+            (<code>document.getElementById(...).innerHTML = ...</code>), you describe what the UI
+            <em>should look like</em> for a given state, and React updates the screen when the
+            state changes.</p>
+          <div class="bridge">
+            <span class="label">Coming from vanilla JS / jQuery</span>
+            The mental shift: you stop writing "find this element and change it" (imperative) and
+            start writing "given this data, here's the UI" (declarative). React figures out the
+            minimal DOM changes. Components are just functions; the HTML-in-JS syntax is called
+            <b>JSX</b>.
+          </div>
+          <pre><code>function Welcome({ name }) {          // a component = a function
+  return &lt;h1&gt;Hello, {name}&lt;/h1&gt;;       // JSX: markup inside JS
+}
+
+function Counter() {
+  const [count, setCount] = React.useState(0);  // state
+  return &lt;button onClick={() =&gt; setCount(count + 1)}&gt;Clicked {count}&lt;/button&gt;;
+}</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            Our admin portal and front-desk view are UIs with lots of interactive state
+            (forms, device lists, live status). React is the industry standard for that, and
+            Next.js (next section) is built on top of it.
+          </div>
+          <div class="links">
+            <a href="https://react.dev/learn">Official interactive tutorial</a>
+            <a href="https://react.dev/learn/thinking-in-react">Thinking in React</a>
+            <a href="https://react.dev/reference/react/useState">Hooks: useState</a>
+          </div>
+        </section>
+
+        <!-- NEXTJS -->
+        <section id="nextjs">
+          <h2>Next.js <span class="tag">web framework (admin, front-desk)</span></h2>
+          <p>React by itself only handles the UI in the browser. A real web app also needs
+            routing (which page for which URL), server-side rendering, a build system, and often
+            some backend endpoints. <b>Next.js is a full framework around React</b> that provides
+            all of that.</p>
+          <div class="bridge">
+            <span class="label">Coming from Node + a templating engine</span>
+            If you've built a site with Express + EJS/Handlebars, Next.js is the modern
+            equivalent: it renders React on the server for a fast first paint, then "hydrates" it
+            into an interactive app in the browser — best of both worlds. Routing is
+            <b>file-based</b>: a file at <code>app/page.tsx</code> is the home page,
+            <code>app/devices/page.tsx</code> is <code>/devices</code>. No route table to wire up.
+          </div>
+          <pre><code>// apps/admin/app/page.tsx  →  serves the "/" route
+export default function HomePage() {
+  return &lt;main&gt;&lt;h1&gt;Tunefour Admin&lt;/h1&gt;&lt;/main&gt;;
+}</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            Two of our apps are web portals (<code>apps/admin</code>, <code>apps/frontdesk</code>).
+            Next.js gives us routing, a production build, and a clean place to talk to the NestJS
+            API — without assembling a dozen libraries ourselves. You already ran it:
+            <code>next build</code> produced the admin portal earlier.
+          </div>
+          <div class="links">
+            <a href="https://nextjs.org/learn">Next.js "Learn" course (start here)</a>
+            <a href="https://nextjs.org/docs/app/building-your-application/routing">App Router &amp; file-based routing</a>
+            <a href="https://nextjs.org/docs">Full docs</a>
+          </div>
+        </section>
+
+        <!-- NESTJS -->
+        <section id="nestjs">
+          <h2>NestJS <span class="tag">backend framework (server)</span></h2>
+          <p>NestJS is a framework for building the <b>server</b> — the API the portals and TV
+            clients talk to. It runs on Node and, under the hood, uses Express (which you may
+            know). Nest adds <em>structure</em>: a consistent way to organise code into modules,
+            controllers, and services, with built-in support for validation, auth guards, and
+            WebSockets.</p>
+          <div class="bridge">
+            <span class="label">Coming from Express</span>
+            In bare Express you wire routes and middleware however you like — flexible, but every
+            project reinvents its structure. Nest is the "batteries-included, opinionated"
+            layer: think Express with a rulebook (and if you've seen Java's Spring or Angular,
+            the module/decorator style will feel familiar).
+          </div>
+          <table>
+            <tr><th>Nest concept</th><th>Plain-English job</th></tr>
+            <tr><td><b>Controller</b></td><td>Handles incoming HTTP requests for a route (e.g. <code>GET /health</code>). We built <code>health.controller.ts</code>.</td></tr>
+            <tr><td><b>Service</b></td><td>Holds business logic, kept separate from HTTP handling so it's testable.</td></tr>
+            <tr><td><b>Module</b></td><td>Groups related controllers/services (e.g. an <code>AuthModule</code>). <code>app.module.ts</code> is the root.</td></tr>
+            <tr><td><b>Decorator</b></td><td>The <code>@Get()</code>, <code>@Controller()</code> annotations — metadata that tells Nest how to wire things.</td></tr>
+          </table>
+          <pre><code>@Controller('health')          // routes under /health
+export class HealthController {
+  @Get()                       // handles GET /health
+  check() { return { status: 'ok' }; }
+}</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            The server is the brain: auth, RBAC, the device manifest, scheduling, and the
+            real-time WebSocket channel. Nest's structure keeps that many-moving-parts system
+            organised and its guard/DI system is a natural fit for the pluggable auth we planned.
+          </div>
+          <div class="links">
+            <a href="https://docs.nestjs.com/first-steps">First steps</a>
+            <a href="https://docs.nestjs.com/controllers">Controllers</a>
+            <a href="https://docs.nestjs.com/providers">Providers &amp; services (DI)</a>
+            <a href="https://docs.nestjs.com/overview">Overview docs</a>
+          </div>
+        </section>
+
+        <!-- ELECTRON -->
+        <section id="electron">
+          <h2>Electron <span class="tag">desktop client (TV kiosk)</span></h2>
+          <p>Electron lets you build a <b>desktop application using web technologies</b>
+            (HTML/CSS/JS). It bundles a Chromium browser and Node.js together, so your app is a
+            web page that also has full access to the operating system (files, auto-start,
+            hardware).</p>
+          <div class="bridge">
+            <span class="label">Coming from web dev</span>
+            You already know how to build a web page. Electron wraps that page into a native
+            <code>.exe</code>/app window. Apps you use daily — VS Code, Slack, Discord — are
+            Electron apps. It has two "sides": the <b>main process</b> (Node.js — controls
+            windows, OS access) and the <b>renderer</b> (the Chromium page — your UI).
+          </div>
+          <pre><code>// apps/client/src/main.ts — the main process
+import { app, BrowserWindow } from 'electron';
+app.whenReady().then(() => {
+  const win = new BrowserWindow({ fullscreen: true, kiosk: true });
+  win.loadFile('static/index.html');   // the page shown on the TV
+});</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            The TV client must render rich content (images, video, HTML dashboards) full-screen,
+            cache files locally, survive reboots, and auto-launch — a web page alone can't touch
+            the filesystem or control the window like that. Electron gives us a browser for
+            rendering <em>plus</em> Node for the offline cache, watchdog, and OS integration.
+          </div>
+          <div class="note">
+            <span class="label">Reminder from setup</span>
+            We set <code>allowBuilds: electron: false</code>, so its ~100&nbsp;MB runtime binary
+            isn't downloaded yet. On a real dev machine you flip that to <code>true</code> (or run
+            <code>pnpm approve-builds</code>) and <code>pnpm --filter @tunefour/client dev</code>
+            opens the window.
+          </div>
+          <div class="links">
+            <a href="https://www.electronjs.org/docs/latest/tutorial/tutorial-1-prerequisites">Official tutorial</a>
+            <a href="https://www.electronjs.org/docs/latest/tutorial/process-model">Main vs renderer process</a>
+            <a href="https://www.electronjs.org/docs/latest">Docs</a>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- DATASTORES -->
+        <section id="datastores">
+          <h2>Postgres · Redis · Object storage <span class="tag">data</span></h2>
+          <div class="grid2">
+            <div class="card">
+              <h3 style="margin-top:0">PostgreSQL</h3>
+              <p>A rock-solid relational (SQL) database. It's our <b>source of truth</b>: offices,
+                devices, playlists, schedules, users. If you've used any SQL database, you're
+                home.</p>
+              <div class="links"><a href="https://www.postgresql.org/docs/current/tutorial.html">PostgreSQL tutorial</a></div>
+            </div>
+            <div class="card">
+              <h3 style="margin-top:0">Redis</h3>
+              <p>An in-memory key–value store — extremely fast. We use it for <b>caching</b> and to
+                <b>fan-out real-time messages</b> across multiple server instances (the WebSocket
+                relay we discussed).</p>
+              <div class="links"><a href="https://redis.io/docs/latest/develop/get-started/">Redis quick start</a></div>
+            </div>
+            <div class="card">
+              <h3 style="margin-top:0">Object storage + CDN</h3>
+              <p>Media files (video, images) don't belong in a database. They go in <b>object
+                storage</b> (S3 / Google Cloud Storage), served fast worldwide via a <b>CDN</b>.
+                Locally we fake S3 with <b>MinIO</b>.</p>
+              <div class="links"><a href="https://min.io/docs/minio/linux/index.html">MinIO docs</a></div>
+            </div>
+            <div class="card">
+              <h3 style="margin-top:0">How they fit</h3>
+              <p><b>Postgres</b> = the facts. <b>Redis</b> = fast scratch space + message bus.
+                <b>Object storage</b> = the big files. Each tool for what it's best at.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- DOCKER -->
+        <section id="docker">
+          <h2>Docker <span class="tag">local services &amp; packaging</span></h2>
+          <p>Docker packages software into <b>containers</b> — self-contained, isolated units that
+            run identically on any machine. Instead of installing Postgres, Redis, and MinIO by
+            hand (different on every laptop), you describe them once and Docker runs them.</p>
+          <div class="bridge">
+            <span class="label">Coming from "install it on my machine"</span>
+            A container is like a lightweight, disposable mini-computer with exactly one program
+            and its dependencies inside. "Works on my machine" disappears because the container
+            <em>is</em> the machine. An <b>image</b> is the blueprint; a <b>container</b> is a
+            running instance of it.
+          </div>
+          <p><b>Docker Compose</b> runs several containers together from one file. Our
+            <code>docker-compose.yml</code> defines Postgres + Redis + MinIO, so local dev is a
+            single command:</p>
+          <pre><code>docker compose up -d      # start Postgres, Redis, MinIO in the background
+docker compose ps         # see what's running
+docker compose down       # stop them</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            Everyone on the team gets identical local databases with zero manual setup, and the
+            same images run in the cloud. (Later phases also package the NestJS server itself as a
+            container for deployment.)
+          </div>
+          <div class="links">
+            <a href="https://docs.docker.com/get-started/introduction/">Docker: get started</a>
+            <a href="https://docs.docker.com/compose/gettingstarted/">Compose tutorial</a>
+            <a href="https://www.docker.com/101-tutorial/">Docker 101</a>
+          </div>
+        </section>
+
+        <!-- TERRAFORM -->
+        <section id="terraform">
+          <h2>Terraform <span class="tag">infrastructure as code</span></h2>
+          <p>Terraform lets you define your <b>cloud infrastructure in text files</b> — servers,
+            databases, networks, storage buckets — and create/update it with a command, instead
+            of clicking around a cloud console. This is called "Infrastructure as Code."</p>
+          <div class="bridge">
+            <span class="label">The mental model</span>
+            You <em>declare</em> the end state you want ("one Postgres database, one storage
+            bucket, a load balancer"), and Terraform figures out the API calls to make reality
+            match. It's version-controlled, reviewable, and repeatable — the same discipline as
+            code, applied to servers.
+          </div>
+          <pre><code># example.tf — declare what you want to exist
+resource "aws_s3_bucket" "media" {
+  bucket = "tunefour-media"
+}</code></pre>
+          <pre><code>terraform plan     # preview what would change
+terraform apply    # make it so</code></pre>
+          <div class="why">
+            <span class="label">Why in Tunefour</span>
+            With real infrastructure across a cloud provider, doing it by hand is error-prone and
+            impossible to reproduce. Terraform keeps our cloud setup in <code>infra/</code>,
+            reviewable in Git like everything else. <b>This is post-MVP</b> — safe to learn last.
+          </div>
+          <div class="links">
+            <a href="https://developer.hashicorp.com/terraform/intro">What is Terraform</a>
+            <a href="https://developer.hashicorp.com/terraform/tutorials/aws-get-started">Get started (AWS)</a>
+            <a href="https://developer.hashicorp.com/terraform/docs">Docs</a>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- FOLDERS -->
+        <section id="folders">
+          <h2>Folder structure</h2>
+          <p>Here's the repo, annotated. The two top-level ideas: <b><code>apps/</code></b> holds
+            runnable programs, <b><code>packages/</code></b> holds shared libraries they import.</p>
+          <div class="tree">
+tunefour/
+├─ <span class="d">apps/</span>                  <span class="c"># runnable programs</span>
+│  ├─ <span class="d">server/</span>             <span class="c"># NestJS API + WebSocket gateway (the backend)</span>
+│  ├─ <span class="d">admin/</span>              <span class="c"># Next.js admin portal (web UI)</span>
+│  ├─ <span class="d">frontdesk/</span>          <span class="c"># Next.js front-desk view (welcome-message sender)</span>
+│  └─ <span class="d">client/</span>             <span class="c"># Electron kiosk app for the TVs</span>
+├─ <span class="d">packages/</span>              <span class="c"># shared libraries (not run directly)</span>
+│  ├─ <span class="d">shared-types/</span>       <span class="c"># TS types + Zod manifest schema, imported by every app</span>
+│  ├─ <span class="d">auth/</span>               <span class="c"># pluggable AuthProvider (Local now, Keycloak later)</span>
+│  └─ <span class="d">config/</span>             <span class="c"># shared ESLint config</span>
+├─ <span class="d">infra/</span>                 <span class="c"># Terraform + Dockerfiles for deployment</span>
+├─ <span class="d">docs/</span>                  <span class="c"># this guide, plus API/design docs</span>
+├─ docker-compose.yml     <span class="c"># local Postgres + Redis + MinIO</span>
+├─ turbo.json             <span class="c"># Turborepo task pipeline</span>
+├─ pnpm-workspace.yaml    <span class="c"># tells pnpm where the packages are</span>
+├─ tsconfig.base.json     <span class="c"># shared TypeScript settings all packages extend</span>
+├─ .nvmrc                 <span class="c"># pins Node version (24) for nvm — familiar!</span>
+└─ IMPLEMENTATION_PLAN.md <span class="c"># the full build plan &amp; phases</span>
+          </div>
+          <h3>Why a monorepo?</h3>
+          <p>All these apps share types and evolve together. Keeping them in one repo means a
+            single <code>pnpm install</code>, atomic changes across apps (update a type and all
+            consumers in one commit), and one place for CI. Turborepo makes building them fast;
+            pnpm workspaces makes them link to each other locally.</p>
+          <h3>Anatomy of one package</h3>
+          <p>Every app/package follows the same pattern you already recognise from Node:</p>
+          <div class="tree">
+apps/server/
+├─ package.json      <span class="c"># its dependencies + scripts (dev, build, lint...)</span>
+├─ tsconfig.json     <span class="c"># extends the root tsconfig.base.json</span>
+├─ eslint.config.mjs <span class="c"># imports the shared config</span>
+└─ <span class="d">src/</span>              <span class="c"># the actual TypeScript source</span>
+   ├─ main.ts        <span class="c"># entry point (starts the server)</span>
+   ├─ app.module.ts  <span class="c"># root NestJS module</span>
+   └─ <span class="d">health/</span>        <span class="c"># a feature folder</span>
+      └─ health.controller.ts
+          </div>
+        </section>
+
+        <!-- WORKFLOW -->
+        <section id="workflow">
+          <h2>How it all runs together</h2>
+          <p>A day-in-the-life of the commands, all run from the repo root:</p>
+          <table>
+            <tr><th>Command</th><th>What happens</th></tr>
+            <tr><td><code>nvm use</code></td><td>Switches to Node 24 (reads <code>.nvmrc</code>). Same nvm you know.</td></tr>
+            <tr><td><code>pnpm install</code></td><td>Installs dependencies for <em>all</em> apps/packages at once and links the workspace packages together.</td></tr>
+            <tr><td><code>docker compose up -d</code></td><td>Starts Postgres, Redis, MinIO locally in containers.</td></tr>
+            <tr><td><code>pnpm dev</code></td><td>Turbo runs every app's <code>dev</code> script in parallel — server, admin, etc. — with hot reload.</td></tr>
+            <tr><td><code>pnpm build</code></td><td>Turbo builds everything in dependency order, using the cache to skip unchanged work.</td></tr>
+            <tr><td><code>pnpm lint</code> / <code>pnpm typecheck</code></td><td>Runs ESLint / the TypeScript compiler across all packages.</td></tr>
+            <tr><td><code>pnpm --filter @tunefour/server dev</code></td><td>Runs a script in just <em>one</em> package (the <code>--filter</code> flag).</td></tr>
+          </table>
+          <div class="why">
+            <span class="label">The flow of a request (end to end)</span>
+            An admin opens the <b>Next.js</b> portal in their browser → it calls the <b>NestJS</b>
+            API → Nest reads/writes <b>Postgres</b> and computes each device's manifest → it
+            pushes an update over WebSocket (fanned out via <b>Redis</b>) → the <b>Electron</b>
+            client on the TV downloads new media from <b>object storage</b>, validates it with the
+            <b>Zod</b> schema from <code>shared-types</code>, and plays it. Every hop shares the
+            same <b>TypeScript</b> types.
+          </div>
+        </section>
+
+        <div class="foot">
+          Tunefour tech guide · pair this with <code>IMPLEMENTATION_PLAN.md</code> for the build
+          phases · questions welcome as we go.
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

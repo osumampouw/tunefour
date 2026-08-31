@@ -76,6 +76,8 @@ Scheduling resolves into a per-device manifest via three priority layers:
 
 Each phase has a clear deliverable and is independently testable. **MVP = Phases 0–7.** Phase 8+ is post-MVP.
 
+> For the recommended Claude Code **model + reasoning effort** to drive each phase, see §11.
+
 ### Phase 0 — Foundations & scaffolding
 - Monorepo (pnpm + Turborepo), shared tsconfig/eslint, CI pipeline.
 - `packages/shared-types` with the manifest schema and core DTOs.
@@ -222,3 +224,36 @@ capabilities — the app never *depends* on OS policy to remain fail-safe.
 - Clock/timezone correctness per office — treat office timezone as first-class; NTP on devices.
 - HTML content as an XSS vector — enforced sandbox + sanitization is mandatory, not optional.
 - Initial provisioning effort per device (90 units) — invest early in a one-shot installer.
+
+---
+
+## 11. Claude Code model & effort per phase
+
+Guidance for which Claude Code **model** and **reasoning effort** to drive each phase with.
+The principle: **match capability to risk and novelty.** Escalate to the most capable model
+(Opus) for anything security-critical, architecture-defining, or correctness-sensitive where a
+subtle bug is expensive; drop to a faster/cheaper model (Sonnet, Haiku) for mechanical,
+well-patterned, or repetitive work. These are starting points — if a model stalls or the diff
+looks shaky, bump the model/effort up.
+
+Model tiers (Claude Code, current lineup): **Opus** (Opus 5 / 4.8) = most capable, best for hard
+reasoning and security; **Sonnet** (Sonnet 5) = balanced default for standard feature work;
+**Haiku** (4.5) = fast/cheap for simple, mechanical tasks. Effort scale: low → medium → high →
+max. Check/switch the active model with `/model`; **fast mode** (`/fast`, Opus with faster
+output) is handy for tight interactive loops.
+
+| Phase | Recommended model | Effort | Why |
+|---|---|---|---|
+| 0 — Scaffolding | Sonnet | medium | Boilerplate + config; well-patterned, low risk. (Done.) |
+| 1 — Data model, **auth**, RBAC, CRUD | **Opus** for auth/RBAC/schema; Sonnet for CRUD | high (auth) / medium (CRUD) | Auth + access control are security-critical; the schema sets long-lived contracts. CRUD around them is routine. |
+| 2 — Media pipeline | Sonnet; **Opus** for signed-URL + checksum design | medium / high | Mostly plumbing, but the signed-URL + integrity path is security-sensitive. |
+| 3 — Enrollment + desired-state manifest sync | **Opus** | high → max | Architecturally central and security-critical (device credentials, scoping, versioned reconciliation). Get it right once. |
+| 4 — Client kiosk (offline-first) | **Opus** | high | Correctness-critical fail-safe logic: atomic swap, rollback, cache, fallback. Subtle bugs = blank screens. |
+| 5 — Real-time gateway (WSS + Redis fan-out) | Sonnet; **Opus** for the fan-out/reconnect design | medium / high | Standard gateway code, but distributed delivery + reconnect semantics deserve Opus. |
+| 6 — Welcome messages + front-desk view | Sonnet; **Opus** for the interrupt-layer/priority logic | medium / high | Mostly feature/UI work; the interrupt precedence + revert logic is the tricky part. |
+| 7 — Fail-safe & security hardening + Windows provisioning | **Opus** | high → max | Highest-stakes phase: hardening, kiosk lockdown, failure drills. Favor thoroughness over speed. |
+| 8+ — Post-MVP | varies: **Opus** for Keycloak/OIDC + mTLS; Sonnet for analytics/auto-update; Haiku for mechanical chores | high (security) / medium / low | Match to each item — security extensions get Opus; routine features get Sonnet; simple upkeep gets Haiku. |
+
+Cross-cutting: use **Haiku/low** for mechanical chores (renames, formatting, dependency bumps,
+doc tweaks) regardless of phase, and reserve **Opus/max** for anything touching auth, device
+credentials, media integrity, or the offline-first fail-safe path.

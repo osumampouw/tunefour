@@ -43,6 +43,15 @@ packages/config         shared lint/tsconfig/build config
 infra/          IaC (Terraform), Dockerfiles, deployment manifests
 ```
 
+## Workflow: design before code (IMPORTANT)
+
+**Before writing code for any new phase, feature, or non-trivial change, first write a
+technical design document in HTML under `docs/`** and get it reviewed/approved before
+implementing. Match the style of the existing docs (e.g. `docs/tech-stack.html`). The doc
+should cover the approach, key decisions/trade-offs, data/interfaces affected, and links to
+references. Add a row for each new doc to `docs/README.md`. Skip this only for trivial edits
+(typos, formatting, dependency bumps) where there's nothing to design.
+
 ## Conventions & things to respect
 
 - **Auth is pluggable.** Admin auth goes through the `AuthProvider` interface in

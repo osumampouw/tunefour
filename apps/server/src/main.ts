@@ -11,4 +11,8 @@ async function bootstrap() {
   console.log(`tunefour-server listening on http://localhost:${port}`);
 }
 
-void bootstrap();
+bootstrap().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error('Failed to start tunefour-server', err);
+  process.exit(1);
+});

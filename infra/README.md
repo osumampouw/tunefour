@@ -1,13 +1,15 @@
 # infra/
 
-Infrastructure-as-code for Tunefour. Cloud-agnostic by design (see IMPLEMENTATION_PLAN.md).
+Infrastructure-as-code for Tunefour. **Target cloud: Google Cloud Platform (GCP).** The design
+stays provider-swappable (see IMPLEMENTATION_PLAN.md and `docs/infra.html`).
 
 ## Planned contents (later phases)
 
-- `terraform/` — VPC/network, managed Postgres (RDS/Cloud SQL), Redis (ElastiCache/Memorystore),
-  object storage bucket + CDN (CloudFront/Cloud CDN), container runtime (ECS/Cloud Run/GKE),
-  secret manager, load balancer + TLS.
-- `docker/` — production Dockerfiles for `apps/server` and `apps/admin`.
+- `terraform/` — VPC/network, managed Postgres (**Cloud SQL**), Redis (**Memorystore**),
+  object storage bucket + CDN (**Cloud Storage + Cloud CDN**), container runtime
+  (**Cloud Run**, or GKE), **Secret Manager**, load balancer + TLS.
+- `docker/` — production Dockerfiles for `apps/server` and `apps/admin`
+  (built via **Cloud Build**, stored in **Artifact Registry**).
 - Deployment manifests / pipelines.
 
 ## Local development
@@ -18,12 +20,14 @@ Use the root `docker-compose.yml` for Postgres, Redis, and MinIO (S3-compatible)
 docker compose up -d
 ```
 
-Cloud provider mapping:
+Local → GCP mapping:
 
-| Local (dev)     | AWS              | GCP              |
-| --------------- | ---------------- | ---------------- |
-| Postgres        | RDS Postgres     | Cloud SQL        |
-| Redis           | ElastiCache      | Memorystore      |
-| MinIO           | S3               | Cloud Storage    |
-| —               | CloudFront (CDN) | Cloud CDN        |
-| local processes | ECS / Fargate    | Cloud Run / GKE  |
+| Local (dev)     | GCP (production)      |
+| --------------- | --------------------- |
+| Postgres        | Cloud SQL             |
+| Redis           | Memorystore           |
+| MinIO           | Cloud Storage         |
+| —               | Cloud CDN             |
+| local processes | Cloud Run (or GKE)    |
+| `.env`          | Secret Manager        |
+| image build     | Cloud Build + Artifact Registry |

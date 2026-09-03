@@ -17,7 +17,7 @@ A server–client digital signage platform:
 | Backend | Node.js + TypeScript — NestJS (API + WS gateway) |
 | Admin portal | Next.js |
 | Client | Electron/Chromium kiosk |
-| Hosting | Cloud (AWS/GCP/Azure — cloud-agnostic design) |
+| Hosting | Cloud — **GCP** (Cloud Run + Cloud SQL + Memorystore + Cloud Storage/CDN); design stays provider-swappable |
 | Tenancy | Single organization (Office → Device → DeviceGroup) |
 | Admin auth | Local users + RBAC for MVP; **pluggable `AuthProvider`** so Keycloak/OIDC drops in later |
 | Client OS | **Windows 11 Pro** (see §7 — enables Assigned Access kiosk, update/reboot control, MDM) |
@@ -111,7 +111,11 @@ Each phase has a clear deliverable and is independently testable. **MVP = Phases
 - **Local cache** (filesystem + local manifest DB); pre-fetch future assets (resumable); verify checksums.
 - **Atomic manifest swap** with rollback; never switch to a partially-downloaded manifest.
 - Renderer: image/video/HTML playback, playlist looping, boundary policy (finish vs hard-cut).
-- **Graceful degradation:** skip failed asset; empty/expired schedule → branded fallback screen (never blank/error).
+- **Graceful degradation — layered fallback (never blank/error):** (1) scheduled content →
+  (2) **configurable default fallback image** (per-device, cached locally; delivered via the
+  manifest's `fallbackAssetId`) → (3) built-in branded screen → (4) inline `data:`-URI screen
+  baked into the client bundle (cannot be missing on disk). A failed asset is skipped; a failed
+  page load swaps to the fallback rather than showing a Chromium error page.
 - WS→poll fallback for updates.
 - **Exit:** device plays its schedule; **pull the network cable and it keeps playing correctly from cache.**
 

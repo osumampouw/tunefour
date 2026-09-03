@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — The Server &amp; NestJS Explained</title>
+    <style>
+      :root {
+        --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2740;
+        --text: #e7ecf3; --muted: #9fb0c9; --accent: #6ea8fe; --accent-2: #7ee0c0;
+        --warn: #ffd479; --border: #2a3652; --code-bg: #0b101b; --radius: 12px; --maxw: 1080px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+      code { background: var(--code-bg); border: 1px solid var(--border); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.86em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; overflow-x: auto; font-size: 0.86em; line-height: 1.55; }
+      pre code { background: none; border: none; padding: 0; }
+      .cm { color: var(--muted); } /* code comment */
+
+      header.hero { padding: 52px 24px 36px; text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border); }
+      header.hero h1 { font-size: 2.2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 720px; margin: 6px auto; }
+      .pill { display: inline-block; margin-top: 14px; padding: 6px 14px; background: var(--panel-2);
+        border: 1px solid var(--border); border-radius: 999px; color: var(--accent-2); font-size: 0.82rem; }
+
+      main { max-width: var(--maxw); margin: 0 auto; padding: 32px 24px 80px; }
+      section { margin-bottom: 40px; scroll-margin-top: 20px; }
+      h2 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+      h3 { font-size: 1.14rem; margin: 24px 0 6px; color: var(--accent-2); }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+      .bridge, .note { border-left: 3px solid var(--accent-2); background: var(--panel-2);
+        border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.95rem; }
+      .note { border-color: var(--warn); }
+      .label { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+
+      table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92rem; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+      td code { white-space: nowrap; }
+
+      .links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .links a { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-2);
+        border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text); }
+      .links a:hover { border-color: var(--accent); text-decoration: none; }
+      .links a::before { content: "↗"; color: var(--accent); font-size: 0.8em; }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      .tag { font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+        padding: 3px 10px; vertical-align: middle; margin-left: 8px; font-weight: normal; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>The Server &amp; NestJS</h1>
+      <p>Reading <code>apps/server</code> with a Spring background. NestJS is built on the same
+        three pillars as Spring — <b>decorators (annotations) + dependency injection + modules</b> —
+        so most of it will map onto what you already know.</p>
+      <span class="pill">If you know Spring, you're 80% of the way there</span>
+    </header>
+
+    <main>
+      <!-- MAPPING -->
+      <section id="mapping">
+        <h2>NestJS ↔ Spring, at a glance</h2>
+        <p>NestJS is directly inspired by Angular, but conceptually it lines up with Spring almost
+          one-to-one:</p>
+        <table>
+          <tr><th>NestJS</th><th>Spring equivalent</th><th>Role</th></tr>
+          <tr><td><code>@Module</code></td><td><code>@Configuration</code> / <code>@SpringBootApplication</code></td><td>Groups controllers + providers</td></tr>
+          <tr><td><code>@Controller('health')</code></td><td><code>@RestController @RequestMapping</code></td><td>HTTP route-handler class</td></tr>
+          <tr><td><code>@Get()</code>, <code>@Post()</code></td><td><code>@GetMapping</code>, <code>@PostMapping</code></td><td>Map a method to an HTTP verb</td></tr>
+          <tr><td><code>@Injectable()</code></td><td><code>@Service</code> / <code>@Component</code></td><td>A DI-managed bean</td></tr>
+          <tr><td>constructor injection</td><td>constructor injection</td><td>How dependencies arrive</td></tr>
+          <tr><td>Guards</td><td>Spring Security filters</td><td>Auth / authorization</td></tr>
+          <tr><td>Interceptors</td><td>AOP / <code>HandlerInterceptor</code></td><td>Cross-cutting logic around handlers</td></tr>
+          <tr><td>Pipes</td><td>argument resolvers / validators</td><td>Validate &amp; transform input</td></tr>
+          <tr><td>Exception filters</td><td><code>@ControllerAdvice</code> / <code>@ExceptionHandler</code></td><td>Turn errors into responses</td></tr>
+        </table>
+        <div class="bridge">
+          <span class="label">The one big difference</span>
+          Spring does <b>classpath component scanning</b> — it finds your <code>@Service</code>s
+          automatically. Nest is <b>explicit</b>: you register controllers/providers in a
+          <code>@Module</code>. Slightly more boilerplate, but the wiring is visible and easy to trace.
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- CODE WALKTHROUGH -->
+      <section id="walkthrough">
+        <h2>Walking the server code</h2>
+
+        <h3>src/main.ts — the bootstrap</h3>
+        <p>Like Spring's <code>main()</code> + <code>SpringApplication.run(...)</code>.</p>
+        <pre><code>import 'reflect-metadata';                        <span class="cm">// enables decorator/reflection machinery</span>
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule); <span class="cm">// build the DI container from the root module</span>
+  app.enableCors();                                <span class="cm">// let the browser admin portal call the API</span>
+  const port = Number(process.env.PORT ?? 3001);
+  await app.listen(port);                          <span class="cm">// start the HTTP server</span>
+}
+void bootstrap();                                  <span class="cm">// `void` = intentionally not awaiting</span></code></pre>
+        <p><code>NestFactory.create(AppModule)</code> boots the whole app from the root module —
+          it constructs the IoC container, instantiates providers, and wires everything, exactly
+          like Spring's application context.</p>
+
+        <h3>src/app.module.ts — the root module</h3>
+        <p>Like a <code>@Configuration</code> class.</p>
+        <pre><code>@Module({
+  controllers: [HealthController],   <span class="cm">// register controllers here</span>
+  <span class="cm">// providers: [...], imports: [...], exports: [...]  ← services, other modules</span>
+})
+export class AppModule {}</code></pre>
+        <p>As the app grows, you split into feature modules (<code>AuthModule</code>,
+          <code>DevicesModule</code>) and list them in <code>imports</code> — Spring's
+          <code>@Import</code> / module organization.</p>
+
+        <h3>src/health/health.controller.ts — a controller</h3>
+        <pre><code>@Controller('health')     <span class="cm">// route prefix: /health   (≈ @RequestMapping)</span>
+export class HealthController {
+  @Get()                  <span class="cm">// handle GET /health       (≈ @GetMapping)</span>
+  check() {
+    return { status: 'ok', <span class="cm">/* ... */</span> };   <span class="cm">// auto-serialized to JSON (≈ @ResponseBody)</span>
+  }
+}</code></pre>
+        <p>Return an object and Nest serializes it to JSON automatically, just like Spring's
+          <code>@RestController</code>.</p>
+
+        <div class="note">
+          <span class="label">Why the decorators work at all</span>
+          TypeScript decorators (<code>@Controller</code>, <code>@Get</code>) emit <b>metadata</b>
+          that Nest reads via <b>reflection</b> at startup — the same "annotations + reflection"
+          model as Java/Spring. That's why <code>tsconfig.base.json</code> sets
+          <code>experimentalDecorators</code> + <code>emitDecoratorMetadata</code>, and why
+          <code>main.ts</code> imports <code>reflect-metadata</code> (the reflection polyfill).
+          Without those, the decorators would be inert.
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- REQUEST LIFECYCLE -->
+      <section id="lifecycle">
+        <h2>The request lifecycle</h2>
+        <p>A request flows through the same kind of chain as Spring's filter/interceptor stack:</p>
+        <div class="card">
+          <pre><code>request
+   ↓  Middleware        <span class="cm">(≈ Servlet filters)</span>
+   ↓  Guards            <span class="cm">(≈ Spring Security — allow/deny)</span>
+   ↓  Interceptors      <span class="cm">(≈ AOP — wrap the handler, before)</span>
+   ↓  Pipes             <span class="cm">(≈ validate/transform the input)</span>
+   ↓  Controller handler → Service (business logic)
+   ↑  Interceptors      <span class="cm">(after — shape the response)</span>
+response</code></pre>
+        </div>
+        <p>We only use Controllers so far. Guards (auth), Pipes (validation), and Interceptors
+          arrive in later phases.</p>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- NEST-CLI -->
+      <section id="nestcli">
+        <h2>nest-cli.json <span class="tag">CLI config</span></h2>
+        <pre><code>{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": { "deleteOutDir": true }
+}</code></pre>
+        <p>This configures the <b>Nest CLI</b> (the <code>nest</code> command) — it is <em>not</em>
+          the TypeScript compiler config. Two distinct jobs:</p>
+        <table>
+          <tr><th>File</th><th>Configures</th></tr>
+          <tr><td><code>tsconfig.json</code></td><td>The TypeScript compiler — how to typecheck &amp; emit.</td></tr>
+          <tr><td><code>nest-cli.json</code></td><td>How the <code>nest</code> CLI <b>builds</b> and <b>generates code</b>.</td></tr>
+        </table>
+        <table>
+          <tr><th>Field</th><th>Meaning</th></tr>
+          <tr><td><code>collection</code></td><td>The set of code <b>generators (schematics)</b> the CLI uses. <code>nest g controller devices</code> or <code>nest g module auth</code> scaffolds boilerplate from these. Think Spring Initializr, but per-file and on demand.</td></tr>
+          <tr><td><code>sourceRoot</code></td><td>Where source lives; generated files land relative to this.</td></tr>
+          <tr><td><code>compilerOptions.deleteOutDir</code></td><td>Wipe <code>dist/</code> before each <code>nest build</code> for a clean output.</td></tr>
+        </table>
+        <p>So <code>nest build</code> (our <code>build</code> script) compiles <em>through</em> the
+          CLI using this config; <code>nest g …</code> uses it to know where and how to scaffold.</p>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- DEPENDENCIES -->
+      <section id="deps">
+        <h2>Why multiple <code>@nestjs/*</code> dependencies?</h2>
+        <p><b>Yes, this is standard — it's how Nest is designed.</b> The framework is deliberately
+          split into small, focused packages so you install only what you use and can swap pieces
+          (e.g. the HTTP engine). Every Nest project looks like this; you're installing official
+          sub-packages, not splitting arbitrarily.</p>
+
+        <h3>Runtime dependencies</h3>
+        <table>
+          <tr><th>Package</th><th>What it is</th></tr>
+          <tr><td><code>@nestjs/core</code></td><td>The engine — DI container, module system, framework runtime. Required.</td></tr>
+          <tr><td><code>@nestjs/common</code></td><td>The everyday toolkit — the decorators (<code>@Controller</code>, <code>@Get</code>, <code>@Injectable</code>, <code>@Module</code>), pipes, guards, interfaces. Required; what you import from constantly.</td></tr>
+          <tr><td><code>@nestjs/platform-express</code></td><td>The <b>HTTP adapter</b>. Nest is platform-agnostic — this binds it to Express. Swap for <code>@nestjs/platform-fastify</code> to run on Fastify instead.</td></tr>
+          <tr><td><code>reflect-metadata</code></td><td>The reflection polyfill the decorators rely on.</td></tr>
+          <tr><td><code>rxjs</code></td><td>Observables, which Nest uses internally (e.g. in interceptors).</td></tr>
+        </table>
+
+        <h3>Dev-only dependencies</h3>
+        <table>
+          <tr><td><code>@nestjs/cli</code></td><td>The <code>nest</code> command (build, generate). A tool, not shipped to production.</td></tr>
+          <tr><td><code>@nestjs/schematics</code></td><td>The generators the CLI uses. Dev-only.</td></tr>
+        </table>
+
+        <div class="bridge">
+          <span class="label">The key design idea</span>
+          The <code>core</code> / <code>common</code> / <code>platform</code> split means the
+          framework core is <b>decoupled from the HTTP layer</b> — Express vs Fastify is a
+          one-package swap, and the runtime stays lean. Later phases add more on demand:
+          <code>@nestjs/websockets</code> + <code>@nestjs/platform-socket.io</code> (real-time
+          gateway), <code>@nestjs/jwt</code> + <code>@nestjs/passport</code> (auth),
+          <code>@nestjs/config</code> (env config).
+        </div>
+
+        <div class="links">
+          <a href="https://docs.nestjs.com/first-steps">Nest: first steps</a>
+          <a href="https://docs.nestjs.com/modules">Modules</a>
+          <a href="https://docs.nestjs.com/controllers">Controllers</a>
+          <a href="https://docs.nestjs.com/providers">Providers &amp; DI</a>
+          <a href="https://docs.nestjs.com/cli/overview">Nest CLI</a>
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- FOLLOW-UP Q&A -->
+      <section id="qa">
+        <h2>Follow-up questions</h2>
+
+        <!-- Q1 -->
+        <h3>Q1. How does an <em>empty</em> <code>export class AppModule {}</code> carry all the controllers &amp; routes?</h3>
+        <p>The class only <em>looks</em> empty. The magic is the <code>@Module(...)</code>
+          <b>decorator</b>: a decorator is just a <b>function that runs when the class is defined</b>
+          and <b>attaches metadata</b> to it. The class body stays empty because the wiring info
+          lives in that metadata, not in code you write inside the braces.</p>
+        <p>This code:</p>
+        <pre><code>@Module({ controllers: [HealthController] })
+export class AppModule {}</code></pre>
+        <p>is essentially shorthand for:</p>
+        <pre><code>class AppModule {}
+<span class="cm">// the decorator is a function call that runs at definition time:</span>
+Module({ controllers: [HealthController] })(AppModule);
+<span class="cm">// ...which internally does something like:</span>
+Reflect.defineMetadata('controllers', [HealthController], AppModule);</code></pre>
+        <p>So the class becomes a <b>token</b> (an identity/key) that metadata hangs off of. The same
+          thing happens to the controller:</p>
+        <pre><code>@Controller('health')   <span class="cm">// stores path 'health' as metadata on the class</span>
+class HealthController {
+  @Get()                <span class="cm">// stores {method: GET, path: ''} as metadata on `check`</span>
+  check() { /* ... */ }
+}</code></pre>
+        <p>Then at startup, <code>NestFactory.create(AppModule)</code> <b>reads that metadata via
+          reflection</b> and wires everything:</p>
+        <div class="card">
+          <pre><code>1. read AppModule's metadata            → finds [HealthController]
+2. read HealthController's @Controller   → prefix "/health"
+3. read each method's @Get/@Post         → check() handles GET ""
+4. register route with Express           → GET /health → HealthController.check()</code></pre>
+        </div>
+        <div class="bridge">
+          <span class="label">Exactly like Spring</span>
+          <code>@RestController class Foo {}</code> is also an "empty" class — the annotations carry
+          the information and Spring reads them by reflection at startup. Nest is the same idea; the
+          decorator + <code>reflect-metadata</code> is the TypeScript equivalent of Java annotations
+          + reflection.
+        </div>
+        <div class="note">
+          <span class="label">Why a class and not a plain object?</span>
+          The class doubles as a <b>DI token</b> and can have a constructor for injected
+          dependencies later (e.g. <code>constructor(private svc: FooService) {}</code>). Here it
+          needs none, so the body is empty — but it's still the identity Nest keys the metadata to.
+        </div>
+
+        <!-- Q2 -->
+        <h3>Q2. <code>app.enableCors()</code> — is the default "no CORS"? How does it work with the browser?</h3>
+        <p>Yes — by default Nest sends <b>no CORS headers</b>, and <code>enableCors()</code> turns
+          them on. But the key thing to understand: <b>CORS is enforced by the browser, not the
+          server.</b></p>
+        <h4 style="color:var(--muted);font-size:0.95rem;margin:14px 0 4px;">What CORS is</h4>
+        <p>Browsers enforce the <b>Same-Origin Policy</b>: JavaScript running on one origin may not
+          <em>read</em> responses from a different origin unless that server explicitly opts in.
+          An "origin" = scheme + host + <b>port</b>, so these are <b>different</b> origins:</p>
+        <pre><code>http://localhost:3000   <span class="cm">← the admin portal (Next.js)</span>
+http://localhost:3001   <span class="cm">← the API (NestJS)  — different port = different origin</span></code></pre>
+        <p>So the admin portal calling the API <em>is</em> a cross-origin request — which is exactly
+          why we need CORS.</p>
+        <h4 style="color:var(--muted);font-size:0.95rem;margin:14px 0 4px;">The flow</h4>
+        <div class="card">
+          <pre><code>Browser JS at :3000 → fetch("http://localhost:3001/health")
+
+WITHOUT enableCors():
+   server responds, but with NO Access-Control-Allow-Origin header
+   → browser BLOCKS the JS from reading the response (CORS error in console)
+
+WITH app.enableCors():
+   server adds  Access-Control-Allow-Origin: *   (default)
+   → browser allows the JS to read the response ✅</code></pre>
+        </div>
+        <p><b>Preflight:</b> for "non-simple" requests (custom headers, methods like PUT/DELETE, or a
+          JSON body), the browser first sends an automatic <code>OPTIONS</code> "preflight" asking
+          "am I allowed?" The server must answer with <code>Access-Control-Allow-Methods/Headers</code>.
+          Nest handles this for you once CORS is enabled.</p>
+        <div class="note">
+          <span class="label">Two things worth knowing</span>
+          <ul style="margin:6px 0;">
+            <li><b>curl / server-to-server calls ignore CORS entirely</b> — there's no browser to
+              enforce it. CORS only ever affects browser JavaScript.</li>
+            <li><b><code>enableCors()</code> with no args allows <em>all</em> origins (<code>*</code>)</b>
+              — fine for local dev, but in production you'd lock it down:
+              <code>app.enableCors({ origin: 'https://admin.tunefour.com', credentials: true })</code>.</li>
+          </ul>
+        </div>
+
+        <!-- Q3 -->
+        <h3>Q3. In production, do you need Nest at runtime? Does the CLI compile everything to plain JS?</h3>
+        <p>Both parts of your understanding are correct — let me split it into build-time vs runtime.</p>
+        <table>
+          <tr><th>Phase</th><th>What runs</th><th>Needs which packages</th></tr>
+          <tr>
+            <td><b>Build (dev/CI)</b></td>
+            <td><code>nest build</code> compiles TypeScript → plain JavaScript into <code>dist/</code>. Decorators become ordinary JS function calls.</td>
+            <td>The <b>CLI</b> (<code>@nestjs/cli</code>, <code>@nestjs/schematics</code>) — dev-only.</td>
+          </tr>
+          <tr>
+            <td><b>Runtime (production)</b></td>
+            <td><code>node dist/main.js</code> — plain Node runs the compiled JS. Nest's engine reads the metadata, builds the DI container, and registers Express routes.</td>
+            <td>The <b>runtime libs</b>: <code>@nestjs/core</code>, <code>@nestjs/common</code>, <code>@nestjs/platform-express</code>, <code>reflect-metadata</code>, <code>rxjs</code>.</td>
+          </tr>
+        </table>
+        <p>So the sequence is:</p>
+        <div class="card">
+          <pre><code>TypeScript (with decorators)
+      │  nest build   (CLI, dev-time — uses tsc under the hood)
+      ▼
+plain JavaScript in dist/   ← decorators are now vanilla JS calls like Module(...)(AppModule)
+      │  node dist/main.js   (production)
+      ▼
+Nest runtime engine reads the metadata (via reflect-metadata) and wires up Express</code></pre>
+        </div>
+        <p>Key points:</p>
+        <ul>
+          <li>The <b>CLI is NOT needed in production</b> — it's a build tool. A production install
+            (<code>pnpm install --prod</code>) skips <code>devDependencies</code>, so no CLI ships.</li>
+          <li>The <b>runtime <code>@nestjs/*</code> packages ARE needed in production</b> — the
+            compiled <code>dist/</code> code <code>require()</code>s them, and the framework does its
+            DI/reflection/routing work at runtime.</li>
+          <li>The "decoration" (attaching metadata) happens the moment the JS module loads (the
+            decorator function calls execute); Nest's engine then reads that metadata at bootstrap.
+            It's all plain JavaScript by then — the TypeScript is long gone.</li>
+        </ul>
+
+        <!-- Q4 -->
+        <h3>Q4. If a file exports two classes, how does Nest know which one to decorate?</h3>
+        <p>Common misconception: <b><code>export</code> has nothing to do with which class gets
+          decorated.</b> A decorator binds to whatever class declaration it sits <b>directly
+          above</b> — it's pure adjacency, decided by the language, not by Nest. So with two classes,
+          each has its own decorator and there's zero ambiguity:</p>
+        <pre><code>@Module({ controllers: [HealthController] })
+export class AppModule {}          <span class="cm">// ← this @Module decorates AppModule</span>
+
+@Module({ providers: [FooService] })
+export class SomethingModule {}    <span class="cm">// ← this @Module decorates SomethingModule</span></code></pre>
+        <p>Recall the desugaring — each decorator is a function call receiving <em>that specific
+          class</em>, so nothing is guessed:</p>
+        <pre><code>class AppModule {}
+Module({ controllers: [HealthController] })(AppModule);   <span class="cm">// bound to AppModule</span>
+
+class SomethingModule {}
+Module({ providers: [FooService] })(SomethingModule);     <span class="cm">// bound to SomethingModule</span></code></pre>
+        <p><code>export</code> just, separately, makes the class importable from other files.</p>
+        <h4 style="color:var(--muted);font-size:0.95rem;margin:14px 0 4px;">So how does Nest know which module is the <em>root</em>?</h4>
+        <p>Not from <code>export</code>, and not by scanning your files — <b>you tell it explicitly</b>
+          in <code>main.ts</code>:</p>
+        <pre><code>const app = await NestFactory.create(AppModule);   <span class="cm">// ← AppModule is the root, by name</span></code></pre>
+        <p>From there Nest discovers everything else by following the root's <code>imports</code>
+          list. So <code>SomethingModule</code> only becomes part of the app if <code>AppModule</code>
+          (or a module it imports) references it:</p>
+        <pre><code>@Module({
+  imports: [SomethingModule],        <span class="cm">// ← this is how SomethingModule gets wired in</span>
+  controllers: [HealthController],
+})
+export class AppModule {}</code></pre>
+        <div class="bridge">
+          <span class="label">Two independent things</span>
+          <ul style="margin:6px 0;">
+            <li><b>Which class a decorator decorates</b> → the class directly below it (language rule,
+              unambiguous).</li>
+            <li><b>Which module is the app root</b> → whichever you pass to
+              <code>NestFactory.create(...)</code> — explicit, not inferred.</li>
+          </ul>
+          A class you export but never pass as root and never <code>import</code> into the graph is
+          simply unused — Nest never touches it.
+        </div>
+
+        <!-- Q5 -->
+        <h3>Q5. Why call <code>bootstrap()</code> with <code>void</code> — and if you use <code>.catch()</code>, do you still need it?</h3>
+        <p><code>bootstrap</code> is <code>async</code>, so calling it returns a <b>Promise</b>. The
+          <code>void</code> operator evaluates the expression and discards the result — so
+          <code>void bootstrap()</code> starts the server but throws away the returned Promise.</p>
+        <h4 style="color:var(--muted);font-size:0.95rem;margin:14px 0 4px;">The "floating promise" problem</h4>
+        <p>Calling an <code>async</code> function without <code>await</code> or <code>.then/.catch</code>
+          leaves a <b>floating promise</b> — one nobody is watching, usually a sign of a forgotten
+          <code>await</code>. We can't <code>await</code> here because this is the top level of a
+          CommonJS module (no top-level await). So the call must be un-awaited — and we mark that
+          intent:</p>
+        <pre><code>bootstrap();        <span class="cm">// ⚠️ floating — is the missing await a bug?</span>
+void bootstrap();   <span class="cm">// ✅ explicit: intentionally not awaiting (fire-and-forget)</span></code></pre>
+        <div class="note">
+          <span class="label">Caveat: void ignores errors</span>
+          <code>void</code> silences the "floating" concern but does <b>not</b> handle a rejection.
+          If startup fails, that's an unhandled rejection. So the more robust pattern for a startup
+          function is to catch and exit:
+          <pre style="margin-top:8px;"><code>bootstrap().catch((err) => {
+  console.error('Failed to start tunefour-server', err);
+  process.exit(1);
+});</code></pre>
+          This is what <code>main.ts</code> uses.
+        </div>
+        <h4 style="color:var(--muted);font-size:0.95rem;margin:14px 0 4px;">With <code>.catch()</code>, do you also need <code>void</code>? No.</h4>
+        <p>Attaching a <code>.catch()</code> handler <b>handles</b> the promise's rejection, which is
+          exactly what makes it "not floating." <code>void</code> and <code>.catch()</code> are two
+          different ways to satisfy the same rule:</p>
+        <table>
+          <tr><th>Form</th><th>Meaning</th></tr>
+          <tr><td><code>void promise</code></td><td>"I'm ignoring this promise entirely" (including any error).</td></tr>
+          <tr><td><code>promise.catch(fn)</code></td><td>"I'm handling this promise's rejection." — the stronger choice.</td></tr>
+        </table>
+        <p>Since <code>.catch()</code> already makes the promise non-floating, <code>void
+          bootstrap().catch(...)</code> would be redundant. Just <code>bootstrap().catch(...)</code>
+          is correct and complete.</p>
+        <div class="bridge">
+          <span class="label">Config note</span>
+          The rule behind all this is <code>@typescript-eslint/no-floating-promises</code>, a
+          <b>type-checked</b> rule. Our current ESLint config uses the plain <code>recommended</code>
+          set (not type-checked), so it isn't enforced yet — the <code>void</code>/<code>.catch()</code>
+          habit is about intent and correctness, and will matter if we enable type-checked lint later.
+        </div>
+      </section>
+
+      <div class="foot">
+        Tunefour · server &amp; NestJS guide · pairs with <code>docs/tech-stack.html</code>
+        and <code>IMPLEMENTATION_PLAN.md</code>
+      </div>
+    </main>
+  </body>
+</html>

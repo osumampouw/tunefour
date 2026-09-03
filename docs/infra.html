@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — Infrastructure, Docker &amp; GCP</title>
+    <style>
+      :root {
+        --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2740;
+        --text: #e7ecf3; --muted: #9fb0c9; --accent: #6ea8fe; --accent-2: #7ee0c0;
+        --warn: #ffd479; --border: #2a3652; --code-bg: #0b101b; --radius: 12px; --maxw: 1080px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+      code { background: var(--code-bg); border: 1px solid var(--border); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.86em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; overflow-x: auto; font-size: 0.86em; line-height: 1.55; }
+      pre code { background: none; border: none; padding: 0; }
+      .cm { color: var(--muted); }
+
+      header.hero { padding: 52px 24px 36px; text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border); }
+      header.hero h1 { font-size: 2.2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 730px; margin: 6px auto; }
+      .pill { display: inline-block; margin-top: 14px; padding: 6px 14px; background: var(--panel-2);
+        border: 1px solid var(--border); border-radius: 999px; color: var(--accent-2); font-size: 0.82rem; }
+
+      main { max-width: var(--maxw); margin: 0 auto; padding: 32px 24px 80px; }
+      section { margin-bottom: 40px; scroll-margin-top: 20px; }
+      h2 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+      h3 { font-size: 1.14rem; margin: 24px 0 6px; color: var(--accent-2); }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+      .bridge, .note, .yes, .no { border-left: 3px solid var(--accent-2); background: var(--panel-2);
+        border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.95rem; }
+      .note { border-color: var(--warn); }
+      .yes { border-color: var(--accent-2); }
+      .no { border-color: #ff9a9a; }
+      .label { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+
+      table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92rem; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+      td code { white-space: nowrap; }
+
+      .links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .links a { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-2);
+        border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text); }
+      .links a:hover { border-color: var(--accent); text-decoration: none; }
+      .links a::before { content: "↗"; color: var(--accent); font-size: 0.8em; }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      .tag { font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+        padding: 3px 10px; vertical-align: middle; margin-left: 8px; font-weight: normal; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>Infrastructure, Docker &amp; GCP</h1>
+      <p>How Tunefour runs — locally today, and on Google Cloud later. Target cloud is
+        <b>GCP</b>. Written for someone who understands the concepts but hasn't used Docker or
+        Terraform hands-on yet.</p>
+      <span class="pill">Deploy target: Google Cloud Platform</span>
+    </header>
+
+    <main>
+      <!-- STATE -->
+      <section id="state">
+        <h2>What "infra" means here, and what exists today</h2>
+        <p>Two very different jobs share the "infrastructure" label:</p>
+        <table>
+          <tr><th>Job</th><th>Tool</th><th>Status in this repo</th></tr>
+          <tr><td><b>Run backing services locally</b> (Postgres, Redis, object storage) so you can develop</td><td>Docker Compose</td><td>✅ <code>docker-compose.yml</code> exists now</td></tr>
+          <tr><td><b>Provision cloud infrastructure</b> (managed DB, buckets, runtime) for deployment</td><td>Terraform</td><td>🔜 planned — <code>infra/</code> is a skeleton, no Terraform code yet</td></tr>
+        </table>
+        <p>So at Phase 0 the only working infra file is <code>docker-compose.yml</code>, plus
+          <code>.env.example</code> for configuration and an <code>infra/</code> folder reserved for
+          later. Deployment is post-MVP.</p>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- DOCKER -->
+      <section id="docker">
+        <h2>Docker &amp; Docker Compose <span class="tag">local dev</span></h2>
+        <p>A <b>container</b> is a lightweight, isolated unit that packages a program with everything
+          it needs to run, so it behaves identically on any machine. <b>Docker Compose</b> runs
+          several containers together from one file — perfect for spinning up the services our app
+          depends on without installing each by hand.</p>
+
+        <h3>docker-compose.yml, explained</h3>
+        <p>It defines three services:</p>
+        <table>
+          <tr><th>Service</th><th>Image</th><th>Port(s)</th><th>Role</th></tr>
+          <tr><td><code>postgres</code></td><td>postgres:16-alpine</td><td>5432</td><td>The relational database — source of truth.</td></tr>
+          <tr><td><code>redis</code></td><td>redis:7-alpine</td><td>6379</td><td>Cache + WebSocket pub/sub fan-out.</td></tr>
+          <tr><td><code>minio</code></td><td>minio/minio</td><td>9000 / 9001</td><td>S3-compatible object storage — <b>stands in for GCP Cloud Storage locally</b>.</td></tr>
+        </table>
+        <p>Key pieces of each service definition:</p>
+        <ul>
+          <li><b>Ports</b> (<code>"5432:5432"</code>) map the container's port to your laptop, so the
+            app connects at <code>localhost:5432</code>.</li>
+          <li><b>Volumes</b> (<code>pgdata</code>, <code>miniodata</code>) persist data on disk so it
+            survives <code>docker compose down</code> / restarts.</li>
+          <li><b>Healthchecks</b> let Docker report when a service is actually ready (not just
+            started).</li>
+          <li><b>Environment</b> sets the dev credentials (user/password/db).</li>
+        </ul>
+        <p>The commands you'll use:</p>
+        <pre><code>docker compose up -d      <span class="cm"># start all three in the background</span>
+docker compose ps         <span class="cm"># see what's running + health</span>
+docker compose logs -f    <span class="cm"># follow logs</span>
+docker compose down       <span class="cm"># stop them (data kept in volumes)</span></code></pre>
+        <div class="note">
+          <span class="label">Why MinIO?</span>
+          You can't run Google Cloud Storage on your laptop, but MinIO speaks the same S3 API, so the
+          server's storage code works identically in dev and against GCP later. This is the standard
+          "local stand-in" trick.
+        </div>
+      </section>
+
+      <!-- ENV -->
+      <section id="env">
+        <h2>.env.example <span class="tag">configuration</span></h2>
+        <p>Configuration and secrets don't belong in code. <code>.env.example</code> is a
+          <b>template</b> listing every setting the app reads (database URL, Redis URL, storage keys,
+          JWT secrets). You copy it to <code>.env</code> (which is git-ignored) and fill in real
+          values.</p>
+        <pre><code>cp .env.example .env     <span class="cm"># then edit .env for your machine</span></code></pre>
+        <p>The default values already match <code>docker-compose.yml</code> (same ports, same dev
+          credentials), so with the containers up, the app connects out of the box. In production
+          these come from <b>GCP Secret Manager</b>, not a file.</p>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- TERRAFORM -->
+      <section id="terraform">
+        <h2>Terraform <span class="tag">cloud provisioning · later</span></h2>
+        <p>Terraform lets you declare your cloud infrastructure in text files and create/update it
+          with a command — "Infrastructure as Code." Instead of clicking around the GCP console, you
+          write what you want and Terraform makes it so, reproducibly and reviewably in Git.</p>
+        <pre><code><span class="cm"># example: a Cloud Storage bucket for media, declared in a .tf file</span>
+resource "google_storage_bucket" "media" {
+  name     = "tunefour-media"
+  location = "ASIA-SOUTHEAST2"   <span class="cm"># e.g. Jakarta region</span>
+}</code></pre>
+        <pre><code>terraform plan     <span class="cm"># preview what would change</span>
+terraform apply    <span class="cm"># create/update the real resources</span></code></pre>
+        <p>This lives in <code>infra/</code> and is <b>post-MVP</b> — safe to learn last. There's no
+          Terraform code yet; the folder is a placeholder.</p>
+      </section>
+
+      <!-- GCP MAP -->
+      <section id="gcp">
+        <h2>Local → GCP mapping</h2>
+        <p>Every local piece has a managed GCP equivalent. The app code stays the same; only
+          connection details change (injected via config/secrets).</p>
+        <table>
+          <tr><th>Local (dev)</th><th>GCP (production)</th><th>What it is</th></tr>
+          <tr><td>Postgres container</td><td><b>Cloud SQL</b> for PostgreSQL</td><td>Managed database + backups + replicas</td></tr>
+          <tr><td>Redis container</td><td><b>Memorystore</b> for Redis</td><td>Managed cache / pub-sub</td></tr>
+          <tr><td>MinIO</td><td><b>Cloud Storage</b></td><td>Object storage for media (S3-compatible API)</td></tr>
+          <tr><td>—</td><td><b>Cloud CDN</b></td><td>Serves media fast worldwide via signed URLs</td></tr>
+          <tr><td>local <code>node</code> processes</td><td><b>Cloud Run</b> (or GKE)</td><td>Runs the NestJS server as a container</td></tr>
+          <tr><td>—</td><td><b>Artifact Registry</b></td><td>Stores the built container images</td></tr>
+          <tr><td>—</td><td><b>Cloud Build</b></td><td>Builds images + runs deploy pipelines in the cloud</td></tr>
+          <tr><td><code>.env</code> file</td><td><b>Secret Manager</b></td><td>Holds secrets (DB password, JWT keys)</td></tr>
+        </table>
+        <div class="bridge">
+          <span class="label">Recommended shape for Tunefour on GCP</span>
+          <b>Cloud Run</b> for the server + admin (simplest, scales to zero, container-native) →
+          <b>Cloud SQL</b> (Postgres) → <b>Memorystore</b> (Redis) → <b>Cloud Storage + Cloud CDN</b>
+          (media) → <b>Secret Manager</b> (secrets) → <b>Artifact Registry</b> + <b>Cloud Build</b>
+          (build/deploy). Reach for <b>GKE</b> (Kubernetes) only if you outgrow Cloud Run.
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- INSTALL -->
+      <section id="install">
+        <h2>Do you need to install Docker &amp; Terraform on your laptop?</h2>
+
+        <h3>Docker — recommended, but you have options</h3>
+        <div class="yes">
+          <span class="label">For local dev services</span>
+          You need a <b>container runtime</b> to run <code>docker compose up</code>. On macOS, pick
+          one:
+          <ul style="margin:6px 0;">
+            <li><b>Docker Desktop</b> — the standard, easiest (includes the <code>docker</code> CLI +
+              Compose).</li>
+            <li><b>OrbStack</b> — a lighter, faster macOS alternative, Docker-compatible.</li>
+            <li><b>colima</b> — free/CLI-only (<code>brew install colima docker docker-compose</code>).</li>
+          </ul>
+        </div>
+        <div class="note">
+          <span class="label">You could even skip Docker for now</span>
+          You already have <b>Postgres 16 and Redis installed via Homebrew</b> (we upgraded them
+          earlier). So you could run those natively (<code>brew services start postgresql@16 redis</code>)
+          and only add <code>minio</code> when you need object storage. Docker is still recommended —
+          it matches production exactly and is one command — but it isn't strictly required to start
+          building.
+        </div>
+        <div class="yes">
+          <span class="label">For building deploy images</span>
+          You do <em>not</em> necessarily need local Docker: <b>GCP Cloud Build</b> builds container
+          images in the cloud from your source. So a common workflow is Cloud Build for images +
+          local Docker only when you want to run/debug a container by hand.
+        </div>
+
+        <h3>Terraform — not yet</h3>
+        <div class="no">
+          <span class="label">Defer it</span>
+          Terraform is only needed when we <b>provision GCP infrastructure</b> — post-MVP. When we get
+          there you can either <code>brew install terraform</code> locally, or use <b>GCP Cloud
+          Shell</b> in the browser, which has Terraform and <code>gcloud</code> preinstalled (nothing
+          to install on your laptop at all). No need now.
+        </div>
+
+        <h3>What you WILL want for GCP work (later)</h3>
+        <ul>
+          <li><b>Google Cloud CLI</b> (<code>gcloud</code>) — <code>brew install --cask
+            google-cloud-sdk</code>. Authenticates and talks to your GCP project.</li>
+          <li>Terraform (as above) when provisioning.</li>
+        </ul>
+        <div class="links">
+          <a href="https://docs.docker.com/get-started/">Docker: get started</a>
+          <a href="https://docs.docker.com/compose/">Docker Compose</a>
+          <a href="https://developer.hashicorp.com/terraform/tutorials/gcp-get-started">Terraform on GCP</a>
+          <a href="https://cloud.google.com/sdk/docs/install">Install gcloud CLI</a>
+          <a href="https://cloud.google.com/run/docs">Cloud Run docs</a>
+        </div>
+      </section>
+
+      <div class="foot">
+        Tunefour · infra / Docker / GCP guide · pairs with <code>docker-compose.yml</code>,
+        <code>infra/README.md</code>, and <code>IMPLEMENTATION_PLAN.md</code>
+      </div>
+    </main>
+  </body>
+</html>

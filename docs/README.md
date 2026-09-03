@@ -7,6 +7,9 @@ Documentation index for the Tunefour digital signage platform.
 | Doc | What it covers |
 | --- | --- |
 | [Tech Stack Guide](./tech-stack.html) | Friendly tour of every technology in the stack (TypeScript, pnpm, Turborepo, React, Next.js, NestJS, Electron, Docker, Terraform) for someone new to it — with "coming from X" bridges, examples, and links to tutorials. **Open in a browser:** `open docs/tech-stack.html` |
+| [Server &amp; NestJS Explained](./server-nestjs.html) | Walkthrough of `apps/server` and NestJS for someone with a Spring background — the Nest↔Spring mapping, the code, `nest-cli.json`, request lifecycle, and why there are multiple `@nestjs/*` packages. **Open in a browser:** `open docs/server-nestjs.html` |
+| [Client &amp; Electron Explained](./client-electron.html) | Walkthrough of `apps/client` — Electron's two-process model, `main.ts` (kiosk window, security flags, lifecycle), the fallback `index.html` + CSP, and what later phases add. **Open in a browser:** `open docs/client-electron.html` |
+| [Infrastructure, Docker &amp; GCP](./infra.html) | Explains the local dev services (`docker-compose.yml`), `.env.example`, Terraform (later), the local→GCP service mapping, and whether you need Docker/Terraform installed locally. **Open in a browser:** `open docs/infra.html` |
 | [ORM / Migration Comparison](./orm-comparison.html) | Decision doc comparing Prisma vs Drizzle vs TypeORM for the NestJS + Postgres server, with a recommendation (Prisma). **Open in a browser:** `open docs/orm-comparison.html` |
 | [Implementation Plan](../IMPLEMENTATION_PLAN.md) | The full architecture, data model, phased build plan (MVP = Phases 0–7), fail-safe & security design, and per-phase Claude model/effort guidance (§11). |
 | [CLAUDE.md](../CLAUDE.md) | Project guardrails and conventions for Claude Code (the two hard requirements, stack, repo layout, Windows 11 Pro notes). |

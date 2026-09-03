@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — The Client &amp; Electron Explained</title>
+    <style>
+      :root {
+        --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2740;
+        --text: #e7ecf3; --muted: #9fb0c9; --accent: #6ea8fe; --accent-2: #7ee0c0;
+        --warn: #ffd479; --border: #2a3652; --code-bg: #0b101b; --radius: 12px; --maxw: 1080px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+      code { background: var(--code-bg); border: 1px solid var(--border); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.86em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; overflow-x: auto; font-size: 0.86em; line-height: 1.55; }
+      pre code { background: none; border: none; padding: 0; }
+      .cm { color: var(--muted); } /* code comment */
+
+      header.hero { padding: 52px 24px 36px; text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border); }
+      header.hero h1 { font-size: 2.2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 720px; margin: 6px auto; }
+      .pill { display: inline-block; margin-top: 14px; padding: 6px 14px; background: var(--panel-2);
+        border: 1px solid var(--border); border-radius: 999px; color: var(--accent-2); font-size: 0.82rem; }
+
+      main { max-width: var(--maxw); margin: 0 auto; padding: 32px 24px 80px; }
+      section { margin-bottom: 40px; scroll-margin-top: 20px; }
+      h2 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+      h3 { font-size: 1.14rem; margin: 24px 0 6px; color: var(--accent-2); }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin: 16px 0; }
+      .bridge, .note, .sec { border-left: 3px solid var(--accent-2); background: var(--panel-2);
+        border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.95rem; }
+      .note { border-color: var(--warn); }
+      .sec { border-color: #ff9a9a; }
+      .label { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+
+      table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92rem; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+
+      .links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .links a { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-2);
+        border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text); }
+      .links a:hover { border-color: var(--accent); text-decoration: none; }
+      .links a::before { content: "↗"; color: var(--accent); font-size: 0.8em; }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      .tag { font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+        padding: 3px 10px; vertical-align: middle; margin-left: 8px; font-weight: normal; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>The Client &amp; Electron</h1>
+      <p>Reading <code>apps/client</code> — the Electron kiosk that runs on each mini-PC and
+        drives a TV. It's a web page wrapped in a native, locked-down, full-screen window.</p>
+      <span class="pill">A browser + Node, fused into a desktop app</span>
+    </header>
+
+    <main>
+      <!-- MODEL -->
+      <section id="model">
+        <h2>Electron's two-process model</h2>
+        <p>Electron bundles a <b>Chromium browser</b> and <b>Node.js</b> into one desktop app. Every
+          Electron app has two kinds of processes:</p>
+        <table>
+          <tr><th>Process</th><th>What it is</th><th>In our repo</th></tr>
+          <tr><td><b>Main</b> (Node.js)</td><td>Controls the app lifecycle, creates windows, full OS access.</td><td><code>src/main.ts</code> — the entry point (<code>package.json → "main": "dist/main.js"</code>)</td></tr>
+          <tr><td><b>Renderer</b> (Chromium)</td><td>The actual web page shown inside a window.</td><td><code>static/index.html</code></td></tr>
+        </table>
+        <div class="bridge">
+          <span class="label">Mental model</span>
+          <code>main.ts</code> is the <b>controller</b> (opens/locks the window, talks to the OS);
+          the HTML is the <b>screen</b> (what plays on the TV). Apps you use daily — VS Code, Slack,
+          Discord — are built the same way.
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- MAIN.TS -->
+      <section id="main">
+        <h2>src/main.ts — the main process</h2>
+        <pre><code>import { app, BrowserWindow } from 'electron';
+import * as path from 'node:path';
+import { DeviceStatus } from '@tunefour/shared-types';</code></pre>
+        <ul>
+          <li><code>app</code> — Electron's application-lifecycle object (fires ready/activate/quit events).</li>
+          <li><code>BrowserWindow</code> — creates a native OS window that renders web content.</li>
+          <li><code>node:path</code> — Node's built-in path module; the <code>node:</code> prefix
+            explicitly means "the Node builtin." The main process runs in Node, so
+            <code>@types/node</code> applies here just like the server.</li>
+        </ul>
+
+        <h3>Creating the window</h3>
+        <pre><code>function createKioskWindow(): void {
+  const win = new BrowserWindow({
+    fullscreen: true,
+    kiosk: true,
+    backgroundColor: '#0b1020',
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+
+  void win.loadFile(path.join(__dirname, '..', 'static', 'index.html'));
+}</code></pre>
+        <table>
+          <tr><th>Option</th><th>Why</th></tr>
+          <tr><td><code>fullscreen: true, kiosk: true</code></td><td><b>Kiosk mode</b> — fills the screen, no window chrome, locked so a passerby can't minimize/close it or escape to the desktop. Exactly what a signage TV needs.</td></tr>
+          <tr><td><code>backgroundColor: '#0b1020'</code></td><td>The window background <em>before</em> content paints — a <b>fail-safe</b> touch that avoids the white startup flash, so you see the brand's dark background, never a blank white screen.</td></tr>
+          <tr><td><code>contextIsolation: true</code></td><td>Walls the web page's JS off from Electron/Node internals — a compromised page can't reach <code>require</code>/filesystem.</td></tr>
+          <tr><td><code>sandbox: true</code></td><td>Restricts the renderer's OS access.</td></tr>
+        </table>
+        <div class="sec">
+          <span class="label">Why the security flags matter here</span>
+          Later phases render <b>user-authored HTML</b> on screen (inside a sandboxed iframe).
+          <code>contextIsolation</code> + <code>sandbox</code> are the "secure by default" settings
+          that ensure such content can never touch the OS. Set them from day one.
+        </div>
+
+        <h3>The loadFile path trick</h3>
+        <pre><code>path.join(__dirname, '..', 'static', 'index.html')</code></pre>
+        <p>At runtime <code>__dirname</code> is <code>apps/client/dist/</code> (where the compiled
+          <code>main.js</code> lives). <code>..</code> goes up to <code>apps/client/</code>, then into
+          <code>static/index.html</code>. Why up-and-over? Because <code>tsc</code> compiles
+          <code>src/ → dist/</code> but <b>does not copy <code>static/</code></b> — the HTML stays at
+          <code>apps/client/static/</code>, so we navigate from <code>dist</code> back up to reach it.
+          (<code>void</code> because <code>loadFile</code> returns a Promise we intentionally don't await.)</p>
+
+        <h3>Lifecycle events</h3>
+        <pre><code>app.whenReady().then(() => {
+  createKioskWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createKioskWindow();
+  });
+});</code></pre>
+        <ul>
+          <li><code>app.whenReady()</code> — Electron must finish initializing before you can create a
+            window; this Promise resolves when it's ready. Then we open the kiosk window.</li>
+          <li><code>app.on('activate', ...)</code> — a <b>macOS</b> convention (clicking the dock icon
+            with no windows open recreates one). Harmless boilerplate on Windows.</li>
+        </ul>
+        <pre><code>app.on('window-all-closed', () => {
+  <span class="cm">// On a kiosk we keep the process alive; a watchdog relaunches on crash.</span>
+  if (process.platform !== 'darwin') app.quit();
+});</code></pre>
+        <div class="note">
+          <span class="label">Placeholder behavior</span>
+          Apps normally quit when the last window closes. For a <b>real kiosk</b> we'll change this —
+          the process should stay alive, and a watchdog relaunches it on crash (fail-safe design).
+          This is the default template for now.
+        </div>
+
+        <h3>The smoke test</h3>
+        <pre><code>console.log('kiosk starting; known device statuses:', Object.values(DeviceStatus));</code></pre>
+        <p>Same as the server's health endpoint — purely proof that the client can import from
+          <code>@tunefour/shared-types</code>. Not functional; it goes away as real logic lands.</p>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- HTML -->
+      <section id="html">
+        <h2>static/index.html — the fallback screen</h2>
+        <pre><code>&lt;meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'unsafe-inline'" /&gt;</code></pre>
+        <ul>
+          <li>This is the page shown on the TV. Right now it's the branded <b>fallback screen</b>
+            ("Tunefour — Phase 0 scaffold") — the fail-safe concept: when nothing is scheduled (or
+            something fails), show this, never a blank/error screen.</li>
+          <li>The <b>CSP</b> (Content-Security-Policy) tag is more hardening: <code>default-src
+            'self'</code> means the page may only load resources from itself (no arbitrary remote
+            scripts), and <code>style-src 'unsafe-inline'</code> permits the inline
+            <code>&lt;style&gt;</code> block.</li>
+        </ul>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- NOW VS LATER -->
+      <section id="later">
+        <h2>Phase 0 now, vs. what comes later</h2>
+        <p>This is the <b>hello-world</b> kiosk — it opens a locked full-screen window showing a
+          static screen. Later phases add the real substance:</p>
+        <table>
+          <tr><th>Later</th><th>What it adds</th></tr>
+          <tr><td>Content renderer</td><td>Plays images / video / HTML playlists on the screen.</td></tr>
+          <tr><td>Local cache + manifest sync</td><td>Offline-first reconciliation: download, checksum, atomic swap, rollback.</td></tr>
+          <tr><td>Watchdog heartbeat</td><td>Detects crash/white-screen and relaunches — auto-recovery.</td></tr>
+        </table>
+        <div class="note">
+          <span class="label">Reminder from setup</span>
+          We set <code>allowBuilds: electron: false</code>, so Electron's runtime binary isn't
+          downloaded — the client <b>compiles</b> but won't <b>launch</b> here. On a real dev machine
+          flip it to <code>true</code> (or <code>pnpm approve-builds</code>) and
+          <code>pnpm --filter @tunefour/client dev</code> opens the window (it runs <code>tsc</code>
+          then <code>electron .</code>, loading <code>dist/main.js</code>).
+        </div>
+        <div class="links">
+          <a href="https://www.electronjs.org/docs/latest/tutorial/process-model">Electron: process model</a>
+          <a href="https://www.electronjs.org/docs/latest/api/browser-window">BrowserWindow API</a>
+          <a href="https://www.electronjs.org/docs/latest/tutorial/security">Security checklist</a>
+        </div>
+      </section>
+
+      <div class="foot">
+        Tunefour · client &amp; Electron guide · pairs with <code>docs/server-nestjs.html</code>
+        and <code>IMPLEMENTATION_PLAN.md</code>
+      </div>
+    </main>
+  </body>
+</html>

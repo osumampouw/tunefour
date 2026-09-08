@@ -19,6 +19,7 @@ A server–client digital signage platform:
 | Client | Electron/Chromium kiosk |
 | Hosting | Cloud — **GCP** (Cloud Run + Cloud SQL + Memorystore + Cloud Storage/CDN); design stays provider-swappable |
 | Tenancy | Single organization (Office → Device → DeviceGroup) |
+| Data access | **TypeORM (Data Mapper pattern)** over PostgreSQL — plain-TS entities + repositories (no DSL); see `docs/orm-comparison.html` |
 | Admin auth | Local users + RBAC for MVP; **pluggable `AuthProvider`** so Keycloak/OIDC drops in later |
 | Client OS | **Windows 11 Pro** (see §7 — enables Assigned Access kiosk, update/reboot control, MDM) |
 | Sync model | Server publishes per-device **desired-state manifest**; client reconciles, caches, atomically swaps |
@@ -86,7 +87,8 @@ Each phase has a clear deliverable and is independently testable. **MVP = Phases
 - **Exit:** `pnpm dev` brings up empty API, admin, and a hello-world Electron client.
 
 ### Phase 1 — Core server & admin (data + auth + CRUD)
-- Postgres schema + migrations for all entities in §3.
+- **TypeORM (Data Mapper)** entities + migrations for all entities in §3 (plain-TS entities +
+  repositories; migrations generated then reviewed/hand-corrected as needed).
 - **Pluggable auth:** `AuthProvider` interface in `packages/auth` + `LocalAuthProvider` (Argon2 hashing, JWT access + refresh).
 - **RBAC** guards (roles: super-admin, content-editor, office-manager, front-desk, viewer).
 - Admin portal: login, and CRUD for Offices, Devices, DeviceGroups, Assets (metadata), Playlists, Schedules.

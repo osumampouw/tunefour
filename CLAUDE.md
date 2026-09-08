@@ -57,6 +57,10 @@ references. Add a row for each new doc to `docs/README.md`. Skip this only for t
 - **Auth is pluggable.** Admin auth goes through the `AuthProvider` interface in
   `packages/auth`. MVP uses `LocalAuthProvider` (Argon2 + JWT). Keycloak/OIDC must be
   addable as a new provider **without touching the rest of the app** — keep it decoupled.
+- **ORM is TypeORM, Data Mapper pattern.** Entities are plain-TS classes; persistence goes
+  through injected repositories (`@InjectRepository(...)`), not `BaseEntity`/Active Record.
+  Keep business logic in services and data access in repositories so services stay unit-testable
+  with a mocked repository. Rationale in `docs/orm-comparison.html`.
 - **Sync model is desired-state.** The server computes a versioned per-device **manifest**;
   the client reconciles toward it (download → verify checksum → atomic swap → rollback on
   failure). Don't add imperative "push individual file" flows that bypass this.

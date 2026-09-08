@@ -70,8 +70,8 @@
     <header class="hero">
       <h1>ORM &amp; Migration Tool — Decision</h1>
       <p>Choosing how the NestJS server talks to PostgreSQL for Tunefour. Compares
-        <b>Prisma</b>, <b>Drizzle</b>, and <b>TypeORM</b> against our needs.</p>
-      <span class="pill">Recommendation: Prisma ✅ (rationale below)</span>
+        <b>Prisma</b>, <b>Drizzle</b>, <b>TypeORM</b>, and <b>Sequelize</b> against our needs.</p>
+      <span class="pill">Decision: TypeORM (Data Mapper pattern) ✅</span>
     </header>
 
     <main>
@@ -89,7 +89,7 @@
             <li><b>Migrations:</b> version-controlled, incremental changes to the database
               <em>structure</em> (add a table, add a column). Like Git commits for your schema —
               so every environment (your laptop, CI, production) can be brought to the same shape
-              reproducibly. All three tools handle this.</li>
+              reproducibly. All four tools handle this (with differing ergonomics).</li>
           </ul>
         </div>
         <div class="bridge">
@@ -224,6 +224,43 @@ export class Device {
         </div>
       </section>
 
+      <!-- SEQUELIZE -->
+      <section id="sequelize">
+        <h2>Sequelize <span class="badge">Familiar, JS-first</span></h2>
+        <p>A mature, traditional ORM in the same family as TypeORM — model objects with instance
+          methods, a big feature set, many SQL dialects, and a huge community. If you've used it
+          before, the mental model feels like home. NestJS even has an official
+          <code>@nestjs/sequelize</code> integration.</p>
+        <pre><code>// model definition (v6 style, with the InferAttributes helpers)
+class Device extends Model&lt;InferAttributes&lt;Device&gt;, InferCreationAttributes&lt;Device&gt;&gt; {
+  declare id: CreationOptional&lt;string&gt;;
+  declare name: string;
+  declare officeId: string;
+}
+Device.init({ /* column definitions */ }, { sequelize });</code></pre>
+        <h3>Strengths</h3>
+        <ul class="tight">
+          <li><span class="good">Familiarity</span> — if you already know Sequelize, you move fast.</li>
+          <li><span class="good">Very mature</span>, battle-tested, large community, many dialects.</li>
+          <li><span class="good">Official NestJS support</span> via <code>@nestjs/sequelize</code>.</li>
+        </ul>
+        <h3>Trade-offs</h3>
+        <ul class="tight">
+          <li><span class="bad">Weakest TypeScript story here</span> — born as a JavaScript library;
+            typing models needs verbose <code>InferAttributes</code> /
+            <code>InferCreationAttributes</code> generics, and many query results come back loosely
+            typed. Awkward while you're also learning TypeScript.</li>
+          <li><span class="bad">Migrations are hand-written</span> (sequelize-cli) and decoupled from
+            models — no auto-diff from schema changes, unlike Prisma.</li>
+          <li><span class="mid">v7 is a TypeScript-first rewrite</span> that improves this with native
+            decorators, but has been slow to fully land; v6 is what most teams run today.</li>
+        </ul>
+        <div class="links">
+          <a href="https://sequelize.org/docs/v6/">Sequelize v6 docs</a>
+          <a href="https://docs.nestjs.com/techniques/database#sequelize-integration">NestJS + Sequelize</a>
+        </div>
+      </section>
+
       <hr class="sep" />
 
       <!-- MATRIX -->
@@ -231,41 +268,85 @@ export class Device {
         <h2>At a glance</h2>
         <table>
           <tr>
-            <th>Criterion</th><th>Prisma</th><th>Drizzle</th><th>TypeORM</th>
+            <th>Criterion</th><th>Prisma</th><th>Drizzle</th><th>TypeORM</th><th>Sequelize</th>
           </tr>
-          <tr><td>Type-safety</td><td class="good">Excellent</td><td class="good">Excellent</td><td class="mid">Good</td></tr>
-          <tr><td>Learning curve (new to stack)</td><td class="good">Gentle</td><td class="mid">Medium (needs SQL)</td><td class="mid">Medium</td></tr>
-          <tr><td>Docs &amp; tutorials</td><td class="good">Outstanding</td><td class="mid">Good, growing</td><td class="mid">Good, dated in places</td></tr>
-          <tr><td>Migrations</td><td class="good">Auto-generated, smooth</td><td class="good">Solid (drizzle-kit)</td><td class="bad">Workable, quirky</td></tr>
-          <tr><td>NestJS fit</td><td class="good">Official recipe</td><td class="good">Clean (provider)</td><td class="good">Native decorator style</td></tr>
-          <tr><td>Raw-SQL escape hatch</td><td class="good">Yes (<code>$queryRaw</code>)</td><td class="good">Yes (SQL-first)</td><td class="good">Yes</td></tr>
-          <tr><td>Schema defined in</td><td>Prisma schema file</td><td>Plain TypeScript</td><td>Class decorators</td></tr>
-          <tr><td>Maturity / community</td><td class="good">Large</td><td class="mid">Newer, fast-growing</td><td class="good">Large, older</td></tr>
+          <tr><td>Type-safety</td><td class="good">Excellent</td><td class="good">Excellent</td><td class="mid">Good</td><td class="bad">Weak (verbose)</td></tr>
+          <tr><td>Learning curve (new to stack)</td><td class="good">Gentle</td><td class="mid">Medium (needs SQL)</td><td class="mid">Medium</td><td class="good">Easy if you know it</td></tr>
+          <tr><td>Docs &amp; tutorials</td><td class="good">Outstanding</td><td class="mid">Good, growing</td><td class="mid">Good, dated in places</td><td class="mid">Large but dated</td></tr>
+          <tr><td>Migrations</td><td class="good">Auto-generated, smooth</td><td class="good">Solid (drizzle-kit)</td><td class="bad">Workable, quirky</td><td class="bad">Manual (hand-written)</td></tr>
+          <tr><td>NestJS fit</td><td class="good">Official recipe</td><td class="good">Clean (provider)</td><td class="good">Native decorator style</td><td class="good">Official @nestjs/sequelize</td></tr>
+          <tr><td>Raw-SQL escape hatch</td><td class="good">Yes (<code>$queryRaw</code>)</td><td class="good">Yes (SQL-first)</td><td class="good">Yes</td><td class="good">Yes</td></tr>
+          <tr><td>Schema defined in</td><td>Prisma schema file</td><td>Plain TypeScript</td><td>Class decorators</td><td>Model classes</td></tr>
+          <tr><td>Maturity / community</td><td class="good">Large</td><td class="mid">Newer, fast-growing</td><td class="good">Large, older</td><td class="good">Very large, oldest</td></tr>
+          <tr><td>Familiarity for you</td><td class="mid">New</td><td class="mid">New</td><td class="mid">Closest to Sequelize</td><td class="good">Highest</td></tr>
         </table>
       </section>
 
+      <hr class="sep" />
+
+      <!-- LOCK-IN -->
+      <section id="lockin">
+        <h2>Vendor lock-in &amp; portability</h2>
+        <p>A key concern for this project: how hard is it to move <em>away</em> from the ORM later?
+          The reassuring baseline — <b>all four are libraries, not frameworks.</b> The database is
+          standard PostgreSQL on GCP Cloud SQL, so the data and schema are always portable. Switching
+          ORMs is a refactor of the data-access code, never a data migration, and none of these bundle
+          external services.</p>
+        <table>
+          <tr><th>ORM</th><th>Proprietary grammar?</th><th>Cost of leaving</th></tr>
+          <tr><td>Drizzle</td><td class="good">No (plain TS, SQL-first)</td><td class="good">Lowest — queries already read like SQL</td></tr>
+          <tr><td><b>TypeORM</b></td><td class="good">No (plain TS classes + decorators)</td><td class="good">Low–moderate — rewrite entities/queries, no special language</td></tr>
+          <tr><td>Sequelize</td><td class="good">No (plain model classes)</td><td class="mid">Low–moderate</td></tr>
+          <tr><td>Prisma</td><td class="bad">Yes — the <code>schema.prisma</code> DSL</td><td class="mid">Moderate — bounded to the data layer; migrations are plain SQL you keep</td></tr>
+        </table>
+        <div class="note">
+          <span class="label">Why this tipped the decision</span>
+          TypeORM uses <b>plain TypeScript</b> (no proprietary schema language), so there is no DSL to
+          be locked into — a deciding factor given a past bad experience with a framework (Keystone.js)
+          whose custom grammar and bundled services made migrating away expensive.
+        </div>
+      </section>
+
+      <hr class="sep" />
+
+      <!-- PATTERN -->
+      <section id="pattern">
+        <h2>Chosen pattern: Data Mapper</h2>
+        <p>TypeORM supports two patterns; we use <b>Data Mapper</b>.</p>
+        <table>
+          <tr><th>Pattern</th><th>How it works</th><th>Analogy</th></tr>
+          <tr><td>Active Record</td><td>The entity class carries its own persistence methods (<code>device.save()</code>, <code>Device.find()</code>) — extend <code>BaseEntity</code>.</td><td>Rails; Django-style</td></tr>
+          <tr><td><b>Data Mapper</b> ✅</td><td>Entities are plain data classes; a separate <b>Repository</b> handles persistence (<code>repo.save(device)</code>, <code>repo.find()</code>).</td><td>Hibernate / JPA / Spring Data</td></tr>
+        </table>
+        <p>We choose <b>Data Mapper</b> because it fits this project's priorities:</p>
+        <ul class="tight">
+          <li><b>Testability (TDD):</b> services depend on a repository that can be mocked in unit tests — no database needed to test business logic.</li>
+          <li><b>Separation of concerns:</b> entities hold shape, services hold logic, repositories hold data access — clean, readable layers.</li>
+          <li><b>NestJS-native:</b> Nest injects repositories with <code>@InjectRepository(Entity)</code>.</li>
+        </ul>
+      </section>
+
+      <hr class="sep" />
+
       <!-- VERDICT -->
       <section id="verdict">
-        <h2>Recommendation</h2>
+        <h2>Decision</h2>
         <div class="verdict">
-          <h3>Use Prisma for Tunefour ✅</h3>
-          <p>Given that <b>you're learning the stack</b>, Prisma wins on the two criteria that
-            matter most right now: <b>gentlest learning curve</b> and <b>outstanding docs</b>,
-            while still giving excellent type-safety and the smoothest migration workflow. Its
-            official NestJS recipe means Phase 1 integration is a well-trodden path, and
-            <code>prisma studio</code> gives you a free GUI to <em>see</em> your data as you build —
-            a real help while the schema is forming in your head.</p>
-          <p style="margin-bottom:0"><b>When we'd reconsider:</b> if we later hit a
-            performance-critical query the fluent API handles awkwardly, we use Prisma's raw-SQL
-            hatch for that one query — no need to switch tools. If this were a SQL-expert team
-            optimizing for minimal abstraction, <b>Drizzle</b> would be the pick. <b>TypeORM</b>
-            only if we specifically wanted the decorator-native Nest style and accepted weaker
-            typing.</p>
+          <h3>TypeORM (Data Mapper pattern) ✅</h3>
+          <p>TypeORM is the best fit for this project's combination of priorities: <b>mature and
+            battle-tested</b> (the de facto ORM in the NestJS ecosystem), <b>no proprietary DSL</b>
+            (plain TypeScript — avoids the lock-in concern), a <b>traditional-ORM model familiar from
+            Sequelize</b>, <b>first-class NestJS integration</b>, and <b>solid type-safety</b> (a big
+            step up from Sequelize).</p>
+          <p style="margin-bottom:0"><b>Known trade-offs we accept:</b> type-safety is good but not as
+            airtight as Prisma/Drizzle on complex queries, and migration auto-generation can need
+            hand-editing. Both are manageable and neither affects reliability; we use the raw-SQL
+            escape hatch for any query the abstraction handles awkwardly.</p>
         </div>
         <div class="note">
           <span class="label">Decision status</span>
-          Proposed — pending your approval. Once confirmed, Phase 1 begins with the Prisma schema
-          for the core entities + the first migration.
+          <b>Decided: TypeORM, Data Mapper pattern.</b> Phase 1 begins with the entities for the core
+          domain (offices, devices, playlists, schedules, users, audit log) + the first migration.
         </div>
       </section>
 

@@ -11,6 +11,7 @@ Documentation index for the Tunefour digital signage platform.
 | [Client &amp; Electron Explained](./client-electron.html) | Walkthrough of `apps/client` — Electron's two-process model, `main.ts` (kiosk window, security flags, lifecycle), the fallback `index.html` + CSP, and what later phases add. **Open in a browser:** `open docs/client-electron.html` |
 | [Infrastructure, Docker &amp; GCP](./infra.html) | Explains the local dev services (`docker-compose.yml`), `.env.example`, Terraform (later), the local→GCP service mapping, and whether you need Docker/Terraform installed locally. **Open in a browser:** `open docs/infra.html` |
 | [ORM / Migration Comparison](./orm-comparison.html) | Decision doc comparing Prisma vs Drizzle vs TypeORM for the NestJS + Postgres server, with a recommendation (Prisma). **Open in a browser:** `open docs/orm-comparison.html` |
+| [Phase 1 — Data Model (Design)](./phase1-data-model.html) | The database schema built in Phase 1: entities, columns, relationships, key decisions, and the migration approach. Mirrors `apps/server/src/entities`. **Open in a browser:** `open docs/phase1-data-model.html` |
 | [Implementation Plan](../IMPLEMENTATION_PLAN.md) | The full architecture, data model, phased build plan (MVP = Phases 0–7), fail-safe & security design, and per-phase Claude model/effort guidance (§11). |
 | [CLAUDE.md](../CLAUDE.md) | Project guardrails and conventions for Claude Code (the two hard requirements, stack, repo layout, Windows 11 Pro notes). |
 

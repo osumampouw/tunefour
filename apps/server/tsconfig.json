@@ -5,7 +5,8 @@
     "rootDir": "src",
     "declaration": false,
     "declarationMap": false,
-    "composite": false
+    "composite": false,
+    "strictPropertyInitialization": false
   },
   "include": ["src/**/*"]
 }

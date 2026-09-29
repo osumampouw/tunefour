@@ -55,3 +55,33 @@ export const DeviceCommand = {
   TakeOffline: 'take-offline',
 } as const;
 export type DeviceCommand = (typeof DeviceCommand)[keyof typeof DeviceCommand];
+
+/** Device provisioning lifecycle — distinct from live connectivity (`DeviceStatus`). */
+export const EnrollmentState = {
+  Pending: 'pending',
+  Active: 'active',
+  Revoked: 'revoked',
+} as const;
+export type EnrollmentState = (typeof EnrollmentState)[keyof typeof EnrollmentState];
+
+/** What a schedule (or welcome message) targets. */
+export const ScheduleTargetType = {
+  Office: 'office',
+  DeviceGroup: 'group',
+  Device: 'device',
+} as const;
+export type ScheduleTargetType = (typeof ScheduleTargetType)[keyof typeof ScheduleTargetType];
+
+/** How a welcome message was triggered. */
+export const WelcomeTriggerType = {
+  Scheduled: 'scheduled',
+  Live: 'live',
+} as const;
+export type WelcomeTriggerType = (typeof WelcomeTriggerType)[keyof typeof WelcomeTriggerType];
+
+/** Type of per-device credential issued during enrollment. */
+export const CredentialType = {
+  Jwt: 'jwt',
+  Cert: 'cert',
+} as const;
+export type CredentialType = (typeof CredentialType)[keyof typeof CredentialType];

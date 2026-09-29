@@ -9,15 +9,24 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
     "test": "echo \"no tests yet\" && exit 0",
+    "typeorm": "typeorm-ts-node-commonjs -d src/database/data-source.ts",
+    "migration:run": "pnpm run typeorm migration:run",
+    "migration:revert": "pnpm run typeorm migration:revert",
+    "migration:show": "pnpm run typeorm migration:show",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/typeorm": "^11.0.3",
     "@tunefour/shared-types": "workspace:*",
+    "dotenv": "^16.6.1",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.31"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
@@ -25,6 +34,7 @@
     "@tunefour/config": "workspace:*",
     "@types/node": "^22.10.2",
     "eslint": "^9.17.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   }
 }

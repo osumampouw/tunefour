@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — Phase 1 Data Model (Design)</title>
+    <style>
+      :root {
+        --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2740;
+        --text: #e7ecf3; --muted: #9fb0c9; --accent: #6ea8fe; --accent-2: #7ee0c0;
+        --warn: #ffd479; --border: #2a3652; --code-bg: #0b101b; --radius: 12px; --maxw: 1120px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+      code { background: var(--code-bg); border: 1px solid var(--border); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.85em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; overflow-x: auto; font-size: 0.84em; line-height: 1.5; }
+      pre code { background: none; border: none; padding: 0; }
+      .cm { color: var(--muted); }
+
+      header.hero { padding: 50px 24px 34px; text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border); }
+      header.hero h1 { font-size: 2.1rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 750px; margin: 6px auto; }
+      .pill { display: inline-block; margin-top: 14px; padding: 6px 14px; background: var(--panel-2);
+        border: 1px solid var(--border); border-radius: 999px; color: var(--accent-2); font-size: 0.82rem; }
+
+      .layout { display: grid; grid-template-columns: 240px 1fr; gap: 36px; max-width: var(--maxw); margin: 0 auto; padding: 30px 24px 80px; }
+      nav.toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto;
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); padding: 16px; font-size: 0.88rem; }
+      nav.toc strong { display:block; color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.08em; margin: 12px 0 6px; }
+      nav.toc strong:first-child { margin-top: 0; }
+      nav.toc a { display:block; color: var(--text); padding: 3px 8px; border-radius: 6px; }
+      nav.toc a:hover { background: var(--panel-2); text-decoration: none; }
+
+      main { min-width: 0; }
+      section { margin-bottom: 40px; scroll-margin-top: 20px; }
+      h2 { font-size: 1.5rem; margin: 0 0 4px; letter-spacing: -0.01em; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+      h3 { font-size: 1.1rem; margin: 22px 0 6px; color: var(--accent-2); }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; max-height: none; } }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin: 14px 0; }
+      .note, .why { border-left: 3px solid var(--accent-2); background: var(--panel-2); border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.94rem; }
+      .note { border-color: var(--warn); }
+      .label { display:inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+      td code { white-space: nowrap; }
+      .pk { color: var(--accent-2); } .fk { color: var(--accent); }
+
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+      .links { margin-top: 12px; display:flex; flex-wrap: wrap; gap: 8px; }
+      .links a { background: var(--panel-2); border: 1px solid var(--border); padding: 5px 11px; border-radius: 8px; font-size: 0.84rem; color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>Phase 1 — Data Model (Design)</h1>
+      <p>The database schema for Tunefour: the entities, their columns and relationships, and the
+        decisions behind them. Built with <b>TypeORM (Data Mapper)</b> on <b>PostgreSQL</b>. This
+        doc is meant to be read side-by-side with the entity code in <code>apps/server/src/entities</code>.</p>
+      <span class="pill">Design first · code mirrors this doc one-to-one</span>
+    </header>
+
+    <div class="layout">
+      <nav class="toc">
+        <strong>Overview</strong>
+        <a href="#scope">Scope</a>
+        <a href="#er">Entity relationships</a>
+        <a href="#conventions">Shared conventions</a>
+        <strong>Entities</strong>
+        <a href="#office">Office</a>
+        <a href="#device">Device</a>
+        <a href="#devicegroup">DeviceGroup</a>
+        <a href="#asset">Asset</a>
+        <a href="#playlist">Playlist &amp; PlaylistItem</a>
+        <a href="#schedule">Schedule</a>
+        <a href="#welcome">WelcomeMessage</a>
+        <a href="#user">User</a>
+        <a href="#credential">DeviceCredential</a>
+        <a href="#audit">AuditLog</a>
+        <strong>Decisions</strong>
+        <a href="#decisions">Key decisions</a>
+        <a href="#migrations">Migrations</a>
+        <a href="#testing">Testing stance</a>
+      </nav>
+
+      <main>
+        <section id="scope">
+          <h2>Scope of this slice</h2>
+          <p>This covers the <b>data model only</b> — the entities, relations, and the first
+            migration that creates the tables. Authentication, RBAC enforcement, and the CRUD API
+            endpoints are the <em>next</em> Phase 1 slices and get their own design docs. Defining all
+            tables now (including a few fields used by later phases, e.g. device enrollment) keeps the
+            schema coherent and avoids repeated migrations.</p>
+          <div class="note">
+            <span class="label">Applied principles</span>
+            <b>KISS/YAGNI:</b> columns are limited to what the plan (§3) calls for; no speculative
+            fields. <b>Single source of truth:</b> enums come from <code>@tunefour/shared-types</code>,
+            reused by the entities (no re-listing string values).
+          </div>
+        </section>
+
+        <section id="er">
+          <h2>Entity relationships</h2>
+          <div class="card">
+            <pre>Office ─1───*─ Device ─*───*─ DeviceGroup
+  │               │
+  │ 1             │ 1
+  *               *
+User          DeviceCredential
+
+Asset ─*───1─ PlaylistItem ─*───1─ Playlist
+
+Schedule ─*───1─ Playlist
+Schedule ─*───0..1─ (Office | DeviceGroup | Device)   <span class="cm"># exactly one target</span>
+
+WelcomeMessage ─*───0..1─ (Office | Device)           <span class="cm"># target</span>
+
+AuditLog ─*───0..1─ User (actor)</pre>
+          </div>
+          <p>Ten entities. The two "polymorphic target" relations (Schedule, WelcomeMessage) are
+            modelled as separate nullable foreign keys plus a <code>targetType</code> enum — see
+            <a href="#decisions">Key decisions</a> for why.</p>
+        </section>
+
+        <section id="conventions">
+          <h2>Shared conventions (every entity)</h2>
+          <table>
+            <tr><th>Convention</th><th>Detail</th></tr>
+            <tr><td>Primary key</td><td><code class="pk">id</code>: UUID (<code>@PrimaryGeneratedColumn('uuid')</code>). Non-guessable, safe to expose, no cross-table collisions.</td></tr>
+            <tr><td>Timestamps</td><td><code>createdAt</code> / <code>updatedAt</code> via <code>@CreateDateColumn</code> / <code>@UpdateDateColumn</code>, stored as <code>timestamptz</code> (UTC).</td></tr>
+            <tr><td>Enums</td><td>Postgres <code>enum</code> columns whose values come from <code>@tunefour/shared-types</code> (e.g. <code>enum: Object.values(AssetType)</code>), typed as the shared union.</td></tr>
+            <tr><td>Flexible data</td><td><code>jsonb</code> for open-ended maps (asset metadata, welcome variables, audit metadata).</td></tr>
+            <tr><td>Money/time</td><td>Durations are integer <b>seconds</b>. Wall-clock dayparts are <code>HH:mm</code> strings resolved in the office timezone (see Device/Schedule).</td></tr>
+          </table>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- OFFICE -->
+        <section id="office">
+          <h2>Office</h2>
+          <p>A physical location. Owns devices and (optionally) office-scoped users. Timezone is
+            first-class — all dayparting resolves in the office's local time.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>name</td><td>text</td><td>e.g. "Jakarta HQ"</td></tr>
+            <tr><td>timezone</td><td>text</td><td>IANA tz, e.g. <code>Asia/Jakarta</code></td></tr>
+            <tr><td>address</td><td>text?</td><td>nullable</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+          <p><b>Relations:</b> <code>devices</code> (1→*), <code>users</code> (1→*, office-scoped).</p>
+        </section>
+
+        <!-- DEVICE -->
+        <section id="device">
+          <h2>Device</h2>
+          <p>One mini-PC + TV. Belongs to exactly one office; may belong to many device groups.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td class="fk">officeId</td><td>uuid</td><td>FK → Office (required)</td></tr>
+            <tr><td>name</td><td>text</td><td>e.g. "Lobby TV"</td></tr>
+            <tr><td>resolution</td><td>text?</td><td>e.g. <code>1920x1080</code></td></tr>
+            <tr><td>orientation</td><td>enum</td><td><code>Orientation</code> — default landscape</td></tr>
+            <tr><td>rotation</td><td>int</td><td>0 / 90 / 180 / 270 — default 0</td></tr>
+            <tr><td>status</td><td>enum</td><td><code>DeviceStatus</code> — online/offline/unenrolled (connectivity)</td></tr>
+            <tr><td>enrollmentState</td><td>enum</td><td><code>EnrollmentState</code> — pending/active/revoked (lifecycle)</td></tr>
+            <tr><td>lastSeenAt</td><td>timestamptz?</td><td>updated by heartbeat (Phase 3)</td></tr>
+            <tr><td>currentManifestVersion</td><td>text?</td><td>what the device reports it's running</td></tr>
+            <tr><td>appVersion</td><td>text?</td><td>client app version</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+          <p><b>Relations:</b> <code>office</code> (*→1), <code>groups</code> (*↔*), <code>credentials</code> (1→*).
+            <b>Index</b> on <code>officeId</code>.</p>
+          <div class="note"><span class="label">Two status fields on purpose</span>
+            <code>status</code> = live connectivity (is it online right now); <code>enrollmentState</code>
+            = provisioning lifecycle (has it been enrolled / revoked). They answer different questions.</div>
+        </section>
+
+        <!-- DEVICEGROUP -->
+        <section id="devicegroup">
+          <h2>DeviceGroup</h2>
+          <p>A tag-based grouping of devices for targeting content (e.g. "All lobby screens"). Org-wide
+            (can span offices). Many-to-many with Device.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>name</td><td>text</td><td>unique-ish label</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+          <p><b>Relations:</b> <code>devices</code> (*↔*, join table <code>device_group_devices</code>).</p>
+        </section>
+
+        <!-- ASSET -->
+        <section id="asset">
+          <h2>Asset</h2>
+          <p>A single piece of content: image, video, HTML, or an external URL. Media bytes live in
+            object storage (Cloud Storage); the row holds metadata + the storage key + checksum.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>type</td><td>enum</td><td><code>AssetType</code> — image/video/html/url</td></tr>
+            <tr><td>name</td><td>text</td><td>human label</td></tr>
+            <tr><td>storageKey</td><td>text?</td><td>object-storage key (null for <code>url</code> type)</td></tr>
+            <tr><td>url</td><td>text?</td><td>external URL (for <code>url</code> type)</td></tr>
+            <tr><td>checksum</td><td>text?</td><td>SHA-256 hex of the bytes (integrity)</td></tr>
+            <tr><td>defaultDurationSec</td><td>int</td><td>how long it shows by default</td></tr>
+            <tr><td>width / height</td><td>int?</td><td>pixel dimensions (nullable)</td></tr>
+            <tr><td>metadata</td><td>jsonb?</td><td>open-ended (codec, source, etc.)</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+        </section>
+
+        <!-- PLAYLIST -->
+        <section id="playlist">
+          <h2>Playlist &amp; PlaylistItem</h2>
+          <p>A <b>Playlist</b> is an ordered loop of content. Each <b>PlaylistItem</b> is one slot in
+            that loop, pointing at an asset with an order and optional duration override. (Playlist =
+            <em>what</em> plays; Schedule = <em>when/where</em> — kept separate on purpose.)</p>
+          <h3>Playlist</h3>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>name</td><td>text</td><td></td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+          <h3>PlaylistItem</h3>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td class="fk">playlistId</td><td>uuid</td><td>FK → Playlist (cascade delete)</td></tr>
+            <tr><td class="fk">assetId</td><td>uuid</td><td>FK → Asset</td></tr>
+            <tr><td>order</td><td>int</td><td>position in the loop</td></tr>
+            <tr><td>durationSec</td><td>int?</td><td>override; null → use asset default</td></tr>
+            <tr><td>transition</td><td>enum</td><td><code>Transition</code> — none/fade</td></tr>
+          </table>
+          <p><b>Index</b> on <code>(playlistId, order)</code> for ordered reads.</p>
+        </section>
+
+        <!-- SCHEDULE -->
+        <section id="schedule">
+          <h2>Schedule</h2>
+          <p>Assigns a playlist to a target (office, group, or single device) for a time window, with a
+            priority for overlap resolution. This is the input to the manifest computation (Phase 3).</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>targetType</td><td>enum</td><td><code>ScheduleTargetType</code> — office/group/device</td></tr>
+            <tr><td class="fk">officeId</td><td>uuid?</td><td>set when targetType = office</td></tr>
+            <tr><td class="fk">deviceGroupId</td><td>uuid?</td><td>set when targetType = group</td></tr>
+            <tr><td class="fk">deviceId</td><td>uuid?</td><td>set when targetType = device</td></tr>
+            <tr><td class="fk">playlistId</td><td>uuid</td><td>FK → Playlist (required)</td></tr>
+            <tr><td>priority</td><td>int</td><td>higher wins on overlap — default 0</td></tr>
+            <tr><td>recurrence</td><td>text?</td><td>RRULE string (iCalendar) for repeats</td></tr>
+            <tr><td>startAt / endAt</td><td>timestamptz?</td><td>date-range bounds</td></tr>
+            <tr><td>daypartStart / daypartEnd</td><td>text?</td><td><code>HH:mm</code> local time (office tz)</td></tr>
+            <tr><td>boundaryPolicy</td><td>enum</td><td><code>BoundaryPolicy</code> — finish/hardcut at window end</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+          <p>Exactly one of <code>officeId</code>/<code>deviceGroupId</code>/<code>deviceId</code> is set,
+            matching <code>targetType</code> (enforced in the service layer; see decisions).</p>
+        </section>
+
+        <!-- WELCOME -->
+        <section id="welcome">
+          <h2>WelcomeMessage</h2>
+          <p>A guest greeting — either scheduled ahead or triggered live from the front-desk view. Sits
+            in the top "interrupt" layer of the manifest.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>targetType</td><td>enum</td><td><code>ScheduleTargetType</code> — office/device (group unused here but reuses the enum)</td></tr>
+            <tr><td class="fk">officeId</td><td>uuid?</td><td>target office</td></tr>
+            <tr><td class="fk">deviceId</td><td>uuid?</td><td>target device</td></tr>
+            <tr><td>template</td><td>text</td><td>e.g. <code>Welcome, {company}</code></td></tr>
+            <tr><td>variables</td><td>jsonb?</td><td>e.g. <code>{ "company": "Acme" }</code></td></tr>
+            <tr><td>triggerType</td><td>enum</td><td><code>WelcomeTriggerType</code> — scheduled/live</td></tr>
+            <tr><td>scheduledStart / scheduledEnd</td><td>timestamptz?</td><td>for scheduled greetings</td></tr>
+            <tr><td>durationSec</td><td>int</td><td>how long to show</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+        </section>
+
+        <!-- USER -->
+        <section id="user">
+          <h2>User</h2>
+          <p>An admin-portal user. Role drives RBAC; office-scoped roles (office-manager, front-desk)
+            carry an office.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td>email</td><td>text</td><td><b>unique</b></td></tr>
+            <tr><td>passwordHash</td><td>text</td><td>Argon2 hash (never the raw password)</td></tr>
+            <tr><td>role</td><td>enum</td><td><code>Role</code> — super-admin … viewer</td></tr>
+            <tr><td class="fk">officeId</td><td>uuid?</td><td>set for office-scoped roles</td></tr>
+            <tr><td>isActive</td><td>boolean</td><td>default true (soft disable)</td></tr>
+            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+        </section>
+
+        <!-- CREDENTIAL -->
+        <section id="credential">
+          <h2>DeviceCredential</h2>
+          <p>A per-device credential issued during enrollment (Phase 3). Stored <b>hashed</b>, never in
+            the clear; can expire and be revoked.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td class="fk">deviceId</td><td>uuid</td><td>FK → Device (cascade delete)</td></tr>
+            <tr><td>type</td><td>enum</td><td><code>CredentialType</code> — jwt/cert</td></tr>
+            <tr><td>secretHash</td><td>text?</td><td>hash of the enrollment secret/token</td></tr>
+            <tr><td>issuedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>expiresAt</td><td>timestamptz?</td><td>null = no expiry</td></tr>
+            <tr><td>revokedAt</td><td>timestamptz?</td><td>set to revoke instantly</td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+          </table>
+        </section>
+
+        <!-- AUDIT -->
+        <section id="audit">
+          <h2>AuditLog</h2>
+          <p>An append-only record of admin actions. Keeps a snapshot of the actor's email so the log
+            stays readable even if the user is later deleted.</p>
+          <table>
+            <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+            <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
+            <tr><td class="fk">actorId</td><td>uuid?</td><td>FK → User (nullable; set null on delete)</td></tr>
+            <tr><td>actorEmail</td><td>text?</td><td>snapshot at action time</td></tr>
+            <tr><td>action</td><td>text</td><td>e.g. <code>device.create</code></td></tr>
+            <tr><td>targetType / targetId</td><td>text?</td><td>what was acted on</td></tr>
+            <tr><td>ip</td><td>text?</td><td>source IP</td></tr>
+            <tr><td>metadata</td><td>jsonb?</td><td>extra context</td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td>when it happened</td></tr>
+          </table>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- DECISIONS -->
+        <section id="decisions">
+          <h2>Key decisions &amp; trade-offs</h2>
+          <h3>UUID primary keys</h3>
+          <p>Non-sequential, non-guessable, safe to expose in URLs/APIs, and they let us reference
+            entities across services without collision. Trade-off: slightly larger than integers — a
+            non-issue at this scale (~90 devices).</p>
+          <h3>Polymorphic targets via nullable FKs + a type enum</h3>
+          <p>Schedule and WelcomeMessage can target an office, group, or device. Rather than a generic
+            <code>(targetType, targetId)</code> pair (which loses foreign-key integrity), we use
+            <b>separate nullable foreign keys</b> plus a <code>targetType</code> enum, and enforce
+            "exactly one is set" in the service layer. This keeps real FK constraints and readable
+            joins, at the cost of a few nullable columns. A DB <code>CHECK</code> constraint can be
+            added later to enforce the invariant at the database level.</p>
+          <h3>Enums as Postgres enums, sourced from shared-types</h3>
+          <p>Column values are validated by the database, and the allowed set is defined once in
+            <code>@tunefour/shared-types</code> and reused (<code>enum: Object.values(AssetType)</code>).
+            No duplicated string lists between the shared package and the entities.</p>
+          <h3>No soft-delete (yet)</h3>
+          <p><b>YAGNI:</b> we don't add <code>deletedAt</code> everywhere now. The AuditLog captures
+            who-did-what history, which covers the immediate need. Soft-delete can be added per-entity
+            later if a real requirement appears.</p>
+          <h3>Durations in seconds; dayparts as local HH:mm</h3>
+          <p>Integer seconds are unambiguous and easy to sum. Dayparts are wall-clock strings resolved
+            in the office's timezone at manifest-computation time — timezone stays first-class.</p>
+        </section>
+
+        <!-- MIGRATIONS -->
+        <section id="migrations">
+          <h2>Migrations</h2>
+          <p>We use <b>TypeORM migrations</b>, not <code>synchronize: true</code>. Auto-sync is
+            convenient but unsafe (it can silently drop columns); migrations are explicit, reviewable,
+            and reproducible across dev / CI / production — the same discipline as code.</p>
+          <ul>
+            <li>The first migration <b>creates all tables</b> for the entities above.</li>
+            <li>Workflow: change an entity → <code>migration:generate</code> → <b>review the SQL</b> →
+              commit → <code>migration:run</code>. Generated SQL is always read before it's trusted.</li>
+            <li>A standalone <code>data-source.ts</code> configures the connection for the TypeORM CLI;
+              the NestJS app configures the same connection via <code>TypeOrmModule</code>.</li>
+          </ul>
+        </section>
+
+        <!-- TESTING -->
+        <section id="testing">
+          <h2>Testing stance for this slice</h2>
+          <p>Per our standards we do test-driven development for logic — but <b>entity definitions are
+            declarative schema, not logic</b>, so unit-testing them adds little (you'd be asserting that
+            a decorator is present). Following <b>KISS/YAGNI</b>, the meaningful tests arrive with the
+            next slices:</p>
+          <ul>
+            <li><b>Repository/service logic</b> (CRUD, the "exactly one target" invariant, schedule
+              overlap resolution) — unit-tested, TDD-style, with the repository mocked.</li>
+            <li><b>Migration + mapping</b> — verified by running the migration against a real Postgres
+              (an integration check), since Postgres-specific types (enum, jsonb) don't map to an
+              in-memory database faithfully.</li>
+          </ul>
+          <p>So this slice is verified by <b>compiling</b> and by <b>running the migration against
+            Postgres</b>; behavioural unit tests begin with the service layer.</p>
+        </section>
+
+        <div class="foot">
+          Tunefour · Phase 1 data-model design · mirrors <code>apps/server/src/entities</code> ·
+          pairs with <code>IMPLEMENTATION_PLAN.md</code> §3
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

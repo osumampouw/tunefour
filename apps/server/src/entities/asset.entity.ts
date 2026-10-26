@@ -23,9 +23,15 @@ export class Asset {
   @Column({ type: 'text' })
   name: string;
 
-  /** Object-storage key for the media bytes. Null for the `url` asset type. */
+  /**
+   * Object locator — the path/name of the object within the storage bucket
+   * where the media bytes live. This is just a pointer to the bytes, not an
+   * access credential: read/write access is controlled separately (the server
+   * uses its own storage permissions; clients get short-lived signed read-only
+   * URLs). Null for the `url` asset type.
+   */
   @Column({ type: 'text', nullable: true })
-  storageKey: string | null;
+  storageLocator: string | null;
 
   /** External URL. Used for the `url` asset type. */
   @Column({ type: 'text', nullable: true })

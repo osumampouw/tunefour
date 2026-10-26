@@ -144,6 +144,14 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td>Flexible data</td><td><code>jsonb</code> for open-ended maps (asset metadata, welcome variables, audit metadata).</td></tr>
             <tr><td>Money/time</td><td>Durations are integer <b>seconds</b>. Wall-clock dayparts are <code>HH:mm</code> strings resolved in the office timezone (see Device/Schedule).</td></tr>
           </table>
+          <div class="note">
+            <span class="label">Reading the column tables</span>
+            Column names are colour-coded: a <code class="pk">teal</code> name is the
+            <b>primary key</b> (the row's own unique id), and a <code class="fk">blue</code> name is a
+            <b>foreign key</b> (it holds the id of a row in another table — the link between tables,
+            e.g. <code class="fk">officeId</code> on Device points at the Office it belongs to).
+            Plain (white) names are ordinary data columns.
+          </div>
         </section>
 
         <hr class="sep" />
@@ -159,7 +167,8 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td>name</td><td>text</td><td>e.g. "Jakarta HQ"</td></tr>
             <tr><td>timezone</td><td>text</td><td>IANA tz, e.g. <code>Asia/Jakarta</code></td></tr>
             <tr><td>address</td><td>text?</td><td>nullable</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
           <p><b>Relations:</b> <code>devices</code> (1→*), <code>users</code> (1→*, office-scoped).</p>
         </section>
@@ -181,7 +190,8 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td>lastSeenAt</td><td>timestamptz?</td><td>updated by heartbeat (Phase 3)</td></tr>
             <tr><td>currentManifestVersion</td><td>text?</td><td>what the device reports it's running</td></tr>
             <tr><td>appVersion</td><td>text?</td><td>client app version</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
           <p><b>Relations:</b> <code>office</code> (*→1), <code>groups</code> (*↔*), <code>credentials</code> (1→*).
             <b>Index</b> on <code>officeId</code>.</p>
@@ -199,7 +209,8 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
             <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
             <tr><td>name</td><td>text</td><td>unique-ish label</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
           <p><b>Relations:</b> <code>devices</code> (*↔*, join table <code>device_group_devices</code>).</p>
         </section>
@@ -208,19 +219,21 @@ AuditLog ─*───0..1─ User (actor)</pre>
         <section id="asset">
           <h2>Asset</h2>
           <p>A single piece of content: image, video, HTML, or an external URL. Media bytes live in
-            object storage (Cloud Storage); the row holds metadata + the storage key + checksum.</p>
+            object storage (Cloud Storage); the row holds metadata + the storage locator + checksum.</p>
           <table>
             <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
             <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
             <tr><td>type</td><td>enum</td><td><code>AssetType</code> — image/video/html/url</td></tr>
             <tr><td>name</td><td>text</td><td>human label</td></tr>
-            <tr><td>storageKey</td><td>text?</td><td>object-storage key (null for <code>url</code> type)</td></tr>
+            <tr><td>storageLocator</td><td>text?</td><td>object locator (path/name) in the bucket — a pointer, not a credential. Null for <code>url</code> type</td></tr>
             <tr><td>url</td><td>text?</td><td>external URL (for <code>url</code> type)</td></tr>
             <tr><td>checksum</td><td>text?</td><td>SHA-256 hex of the bytes (integrity)</td></tr>
             <tr><td>defaultDurationSec</td><td>int</td><td>how long it shows by default</td></tr>
-            <tr><td>width / height</td><td>int?</td><td>pixel dimensions (nullable)</td></tr>
+            <tr><td>width</td><td>int?</td><td>pixel width (nullable)</td></tr>
+            <tr><td>height</td><td>int?</td><td>pixel height (nullable)</td></tr>
             <tr><td>metadata</td><td>jsonb?</td><td>open-ended (codec, source, etc.)</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
         </section>
 
@@ -235,7 +248,8 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
             <tr><td class="pk">id</td><td>uuid</td><td>PK</td></tr>
             <tr><td>name</td><td>text</td><td></td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
           <h3>PlaylistItem</h3>
           <table>
@@ -265,10 +279,13 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td class="fk">playlistId</td><td>uuid</td><td>FK → Playlist (required)</td></tr>
             <tr><td>priority</td><td>int</td><td>higher wins on overlap — default 0</td></tr>
             <tr><td>recurrence</td><td>text?</td><td>RRULE string (iCalendar) for repeats</td></tr>
-            <tr><td>startAt / endAt</td><td>timestamptz?</td><td>date-range bounds</td></tr>
-            <tr><td>daypartStart / daypartEnd</td><td>text?</td><td><code>HH:mm</code> local time (office tz)</td></tr>
+            <tr><td>startAt</td><td>timestamptz?</td><td>date-range start</td></tr>
+            <tr><td>endAt</td><td>timestamptz?</td><td>date-range end</td></tr>
+            <tr><td>daypartStart</td><td>text?</td><td>daypart start, <code>HH:mm</code> local (office tz)</td></tr>
+            <tr><td>daypartEnd</td><td>text?</td><td>daypart end, <code>HH:mm</code> local (office tz)</td></tr>
             <tr><td>boundaryPolicy</td><td>enum</td><td><code>BoundaryPolicy</code> — finish/hardcut at window end</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
           <p>Exactly one of <code>officeId</code>/<code>deviceGroupId</code>/<code>deviceId</code> is set,
             matching <code>targetType</code> (enforced in the service layer; see decisions).</p>
@@ -288,9 +305,11 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td>template</td><td>text</td><td>e.g. <code>Welcome, {company}</code></td></tr>
             <tr><td>variables</td><td>jsonb?</td><td>e.g. <code>{ "company": "Acme" }</code></td></tr>
             <tr><td>triggerType</td><td>enum</td><td><code>WelcomeTriggerType</code> — scheduled/live</td></tr>
-            <tr><td>scheduledStart / scheduledEnd</td><td>timestamptz?</td><td>for scheduled greetings</td></tr>
+            <tr><td>scheduledStart</td><td>timestamptz?</td><td>window start for scheduled greetings</td></tr>
+            <tr><td>scheduledEnd</td><td>timestamptz?</td><td>window end for scheduled greetings</td></tr>
             <tr><td>durationSec</td><td>int</td><td>how long to show</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
         </section>
 
@@ -307,7 +326,8 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td>role</td><td>enum</td><td><code>Role</code> — super-admin … viewer</td></tr>
             <tr><td class="fk">officeId</td><td>uuid?</td><td>set for office-scoped roles</td></tr>
             <tr><td>isActive</td><td>boolean</td><td>default true (soft disable)</td></tr>
-            <tr><td>createdAt / updatedAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>createdAt</td><td>timestamptz</td><td></td></tr>
+            <tr><td>updatedAt</td><td>timestamptz</td><td></td></tr>
           </table>
         </section>
 
@@ -340,7 +360,8 @@ AuditLog ─*───0..1─ User (actor)</pre>
             <tr><td class="fk">actorId</td><td>uuid?</td><td>FK → User (nullable; set null on delete)</td></tr>
             <tr><td>actorEmail</td><td>text?</td><td>snapshot at action time</td></tr>
             <tr><td>action</td><td>text</td><td>e.g. <code>device.create</code></td></tr>
-            <tr><td>targetType / targetId</td><td>text?</td><td>what was acted on</td></tr>
+            <tr><td>targetType</td><td>text?</td><td>kind of thing acted on, e.g. "device"</td></tr>
+            <tr><td>targetId</td><td>text?</td><td>id of the thing acted on</td></tr>
             <tr><td>ip</td><td>text?</td><td>source IP</td></tr>
             <tr><td>metadata</td><td>jsonb?</td><td>extra context</td></tr>
             <tr><td>createdAt</td><td>timestamptz</td><td>when it happened</td></tr>

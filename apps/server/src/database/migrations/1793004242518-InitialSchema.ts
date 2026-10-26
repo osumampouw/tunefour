@@ -1,13 +1,13 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitialSchema1790595523675 implements MigrationInterface {
-    name = 'InitialSchema1790595523675'
+export class InitialSchema1793004242518 implements MigrationInterface {
+    name = 'InitialSchema1793004242518'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Required for the uuid_generate_v4() default on UUID primary keys.
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
         await queryRunner.query(`CREATE TYPE "public"."assets_type_enum" AS ENUM('image', 'video', 'html', 'url')`);
-        await queryRunner.query(`CREATE TABLE "assets" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "type" "public"."assets_type_enum" NOT NULL, "name" text NOT NULL, "storageKey" text, "url" text, "checksum" text, "defaultDurationSec" integer NOT NULL, "width" integer, "height" integer, "metadata" jsonb, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_da96729a8b113377cfb6a62439c" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "assets" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "type" "public"."assets_type_enum" NOT NULL, "name" text NOT NULL, "storageLocator" text, "url" text, "checksum" text, "defaultDurationSec" integer NOT NULL, "width" integer, "height" integer, "metadata" jsonb, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_da96729a8b113377cfb6a62439c" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "device_groups" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" text NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_0a85eb3da91cda682e08b66ae77" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."device_credentials_type_enum" AS ENUM('jwt', 'cert')`);
         await queryRunner.query(`CREATE TABLE "device_credentials" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "deviceId" uuid NOT NULL, "type" "public"."device_credentials_type_enum" NOT NULL DEFAULT 'jwt', "secretHash" text, "issuedAt" TIMESTAMP WITH TIME ZONE NOT NULL, "expiresAt" TIMESTAMP WITH TIME ZONE, "revokedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_96678b2954bc2c8d4d5be68f011" PRIMARY KEY ("id"))`);

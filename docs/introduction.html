@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tunefour — Tech Stack Guide</title>
+    <title>Tunefour — Introduction</title>
     <style>
       :root {
         --bg: #0f1420;
@@ -150,6 +150,7 @@
       .tree {
         background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
         padding: 18px; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 0.84rem; line-height: 1.7;
+        white-space: pre; overflow-x: auto;
       }
       .tree .c { color: var(--muted); }
       .tree .d { color: var(--accent); }
@@ -160,7 +161,7 @@
   </head>
   <body>
     <header class="hero">
-      <h1>Tunefour — Tech Stack Guide</h1>
+      <h1>Tunefour — Introduction</h1>
       <p>A friendly tour of every technology in this project, written for an experienced
         developer who is new to this particular stack.</p>
       <p>You already know: <b>Node.js, npm, nvm, ESLint</b>. This guide bridges from there to
@@ -173,6 +174,7 @@
       <nav class="toc">
         <strong>Start here</strong>
         <a href="#big-picture">The big picture</a>
+        <a href="#happy-path">Happy path walkthrough</a>
         <a href="#learning-path">Suggested learning path</a>
         <strong>Language &amp; tooling</strong>
         <a href="#typescript">TypeScript</a>
@@ -226,6 +228,55 @@
             <li><b>Data &amp; infrastructure</b> — where state lives and how we run/host it:
               Postgres, Redis, object storage, Docker, Terraform.</li>
           </ul>
+
+          <h3 id="happy-path">Happy path: from login to a TV playing content</h3>
+          <p>To see how the pieces fit, here's the end-to-end story of getting content onto a screen.</p>
+
+          <p><b>Part 1 — an admin publishes content</b> (admin portal → server → database → object storage):</p>
+          <ol>
+            <li><b>Log in.</b> An admin opens the Next.js portal and signs in. The server verifies the
+              password (checked against an Argon2 hash) and returns a signed <b>token (JWT)</b>; the
+              browser sends it on every later request to prove who it is.</li>
+            <li><b>Create an asset.</b> They upload a video. The bytes go to <b>object storage</b>
+              (Cloud Storage); the server saves an <code>Asset</code> row holding the object's locator
+              and a <b>SHA-256 checksum</b> (a fingerprint used later to verify integrity).</li>
+            <li><b>Build a playlist.</b> They arrange assets into an ordered <code>Playlist</code> —
+              the loop of content.</li>
+            <li><b>Schedule it.</b> They create a <code>Schedule</code>: "play this playlist on the
+              Jakarta lobby screens, weekdays 09:00–17:00 <em>local</em> time." It's saved; nothing is
+              pushed to screens yet.</li>
+          </ol>
+
+          <p><b>Part 2 — a new TV joins and starts playing</b> (enroll → authenticate → pull → play):</p>
+          <ol>
+            <li><b>Enroll.</b> A technician installs the Electron client on a mini-PC and enters a
+              one-time <b>enrollment token</b> that an admin generated for that device.</li>
+            <li><b>Get a device identity.</b> The client swaps that token for a long-lived, per-device
+              <b>credential</b> (stored hashed on the server). From then on the device authenticates as
+              itself and can only see its own data — never another device's.</li>
+            <li><b>Ask what to show.</b> The device requests its <b>manifest</b> — the computed list of
+              what to play, resolved from the schedules that target it (in the office's local timezone).</li>
+            <li><b>Pull the media.</b> The manifest carries short-lived <b>signed URLs</b> for each
+              asset. The device downloads them, <b>verifies each checksum</b>, caches them on disk, then
+              begins playing.</li>
+            <li><b>Stay in sync.</b> The server can push updates over <b>WebSocket</b> (a schedule
+              changed, or "show this welcome now"); the device reconciles to the new manifest.</li>
+          </ol>
+
+          <div class="why">
+            <span class="label">How this stays secure &amp; fail-safe</span>
+            <ul style="margin:6px 0">
+              <li><b>Secure:</b> every connection is encrypted (TLS/WSS); each device authenticates with
+                its own credential and can read only its own content; media is fetched through
+                time-limited <b>signed URLs</b> (never a standing key) and checksum-verified; admin
+                access is <b>role-based</b>.</li>
+              <li><b>Offline-resistant:</b> the device caches its whole schedule locally and plays from
+                cache, so it keeps running correctly through a server outage or a dropped network — and
+                falls back to a branded screen rather than ever showing a blank or error.</li>
+              <li><b>Self-healing:</b> on Windows it auto-logs-in, auto-launches full-screen, and a
+                watchdog relaunches the app if it crashes or the PC reboots.</li>
+            </ul>
+          </div>
         </section>
 
         <section id="learning-path">
@@ -742,7 +793,7 @@ apps/server/
         </section>
 
         <div class="foot">
-          Tunefour tech guide · pair this with <code>IMPLEMENTATION_PLAN.md</code> for the build
+          Tunefour introduction · pair this with <code>IMPLEMENTATION_PLAN.md</code> for the build
           phases · questions welcome as we go.
         </div>
       </main>

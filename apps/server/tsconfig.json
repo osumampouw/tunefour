@@ -8,5 +8,6 @@
     "composite": false,
     "strictPropertyInitialization": false
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.spec.ts", "dist", "node_modules"]
 }

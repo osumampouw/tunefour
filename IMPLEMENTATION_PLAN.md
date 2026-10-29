@@ -89,7 +89,7 @@ Each phase has a clear deliverable and is independently testable. **MVP = Phases
 ### Phase 1 — Core server & admin (data + auth + CRUD)
 - **TypeORM (Data Mapper)** entities + migrations for all entities in §3 (plain-TS entities +
   repositories; migrations generated then reviewed/hand-corrected as needed).
-- **Pluggable auth:** `AuthProvider` interface in `packages/auth` + `LocalAuthProvider` (Argon2 hashing, JWT access + refresh).
+- **Pluggable auth:** `AuthProvider` interface in `packages/auth` + `GoogleOidcAuthProvider` (Google SSO via OpenID Connect; no passwords — domain + user allowlist, our own JWT access + refresh). Keycloak addable later as the same OIDC provider.
 - **RBAC** guards (roles: super-admin, content-editor, office-manager, front-desk, viewer).
 - Admin portal: login, and CRUD for Offices, Devices, DeviceGroups, Assets (metadata), Playlists, Schedules.
 - Audit logging on all mutations.
@@ -145,7 +145,7 @@ Each phase has a clear deliverable and is independently testable. **MVP = Phases
 - **Exit (MVP done):** documented failure drills pass (server down, network down, OS reboot, bad asset, revoked device).
 
 ### Phase 8+ — Post-MVP
-- **Keycloak/OIDC** as `OidcAuthProvider` (roles from Keycloak groups) — no app rewrite.
+- **Keycloak** as an additional OpenID Connect issuer (roles from Keycloak groups) — a configuration change (issuer + credentials), no app rewrite.
 - **mTLS** device certificates (upgrade from JWT).
 - **Proof-of-play** analytics + reporting (batched playback logs).
 - **Auto-update** via electron-updater with staged rollout.
@@ -209,7 +209,7 @@ capabilities — the app never *depends* on OS policy to remain fail-safe.
 - TLS/WSS everywhere; HSTS on portal.
 - Device identity via enrollment token → long-lived credential (JWT now, mTLS later); per-device scoping; instant revocation.
 - Signed, short-lived media URLs + SHA-256 checksum verification on client.
-- Pluggable admin auth (Local → Keycloak) + RBAC + audit log.
+- Pluggable admin auth (Google SSO via OIDC → Keycloak later) + RBAC + audit log.
 - Sandboxed iframe + strict CSP for user-authored HTML content (XSS containment); sanitize on upload.
 - Rate limiting, input validation, secrets in cloud secret manager, least-privilege IAM.
 

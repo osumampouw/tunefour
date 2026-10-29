@@ -1,8 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { DeviceStatus } from '@tunefour/shared-types';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('health')
 export class HealthController {
+  @Public()
   @Get()
   check() {
     return {

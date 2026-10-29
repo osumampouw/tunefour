@@ -14,6 +14,10 @@ import { Office } from './office.entity';
 /**
  * An admin-portal user. The role drives role-based access control. Office-scoped
  * roles (office-manager, front-desk) carry an office; org-wide roles leave it null.
+ *
+ * Authentication is delegated to Google SSO (OpenID Connect) — we store no
+ * passwords. This row is the access allowlist: a person can sign in only if an
+ * active row exists for their email. See docs/phase1-auth-rbac.html.
  */
 @Entity('users')
 export class User {
@@ -24,9 +28,15 @@ export class User {
   @Column({ type: 'text' })
   email: string;
 
-  /** Argon2 hash of the password. The raw password is never stored. */
-  @Column({ type: 'text' })
-  passwordHash: string;
+  /**
+   * The identity provider's stable per-account id (Google's `sub` claim),
+   * captured on first successful sign-in. Null until the user signs in once.
+   * Used for audit and robust account linking; the allowlist still matches by
+   * email in this phase.
+   */
+  @Index({ unique: true })
+  @Column({ type: 'text', nullable: true })
+  externalId: string | null;
 
   @Column({ type: 'enum', enum: Object.values(Role) })
   role: Role;

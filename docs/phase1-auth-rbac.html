@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tunefour — Phase 1 Auth &amp; RBAC (Design)</title>
+    <style>
+      :root {
+        --bg: #0f1420; --panel: #161d2e; --panel-2: #1c2740;
+        --text: #e7ecf3; --muted: #9fb0c9; --accent: #6ea8fe; --accent-2: #7ee0c0;
+        --warn: #ffd479; --border: #2a3652; --code-bg: #0b101b; --radius: 12px; --maxw: 1120px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code, pre { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+      code { background: var(--code-bg); border: 1px solid var(--border); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.85em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; overflow-x: auto; font-size: 0.84em; line-height: 1.5; }
+      pre code { background: none; border: none; padding: 0; }
+      .cm { color: var(--muted); }
+
+      header.hero { padding: 50px 24px 34px; text-align: center;
+        background: radial-gradient(1200px 400px at 50% -50%, #24314f 0%, transparent 70%);
+        border-bottom: 1px solid var(--border); }
+      header.hero h1 { font-size: 2.1rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      header.hero p { color: var(--muted); max-width: 760px; margin: 6px auto; }
+      .pill { display: inline-block; margin-top: 14px; padding: 6px 14px; background: var(--panel-2);
+        border: 1px solid var(--border); border-radius: 999px; color: var(--accent-2); font-size: 0.82rem; }
+
+      .layout { display: grid; grid-template-columns: 240px 1fr; gap: 36px; max-width: var(--maxw); margin: 0 auto; padding: 30px 24px 80px; }
+      nav.toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto;
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); padding: 16px; font-size: 0.88rem; }
+      nav.toc strong { display:block; color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.08em; margin: 12px 0 6px; }
+      nav.toc strong:first-child { margin-top: 0; }
+      nav.toc a { display:block; color: var(--text); padding: 3px 8px; border-radius: 6px; }
+      nav.toc a:hover { background: var(--panel-2); text-decoration: none; }
+
+      main { min-width: 0; }
+      section { margin-bottom: 38px; scroll-margin-top: 20px; }
+      h2 { font-size: 1.5rem; margin: 0 0 4px; letter-spacing: -0.01em; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+      h3 { font-size: 1.1rem; margin: 22px 0 6px; color: var(--accent-2); }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; max-height: none; } }
+
+      .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin: 14px 0; }
+      .note, .why, .sec { border-left: 3px solid var(--accent-2); background: var(--panel-2); border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 0.94rem; }
+      .note { border-color: var(--warn); }
+      .sec { border-color: #ff9a9a; }
+      .label { display:inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+
+      table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      tr:last-child td { border-bottom: none; }
+      .yes { color: var(--accent-2); } .no { color: #ff9a9a; } .mid { color: var(--warn); }
+
+      ol.flow { counter-reset: step; list-style: none; padding-left: 0; }
+      ol.flow li { position: relative; padding: 8px 0 8px 44px; border-bottom: 1px solid var(--border); }
+      ol.flow li:last-child { border-bottom: none; }
+      ol.flow li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 8px;
+        width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 999px;
+        background: var(--panel-2); border: 1px solid var(--border); color: var(--accent); font-size: 0.85rem; font-weight: 600; }
+
+      .links { margin-top: 12px; display:flex; flex-wrap: wrap; gap: 8px; }
+      .links a { background: var(--panel-2); border: 1px solid var(--border); padding: 5px 11px; border-radius: 8px; font-size: 0.84rem; color: var(--text); }
+      .foot { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+      hr.sep { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <h1>Phase 1 — Authentication &amp; Access Control (Design)</h1>
+      <p>How admin-portal users sign in and what each role is allowed to do. Authentication is
+        delegated to <b>Google (Single Sign-On via OpenID Connect)</b> — no passwords of our own.
+        Covers the pluggable auth boundary (Google now, Keycloak later — both OpenID Connect),
+        account provisioning, sessions, and role-based access control (RBAC) with office scoping.
+        Read before the code lands in <code>packages/auth</code> and
+        <code>apps/server/src/auth</code>.</p>
+      <span class="pill">Design approved · implemented in packages/auth + apps/server/src/auth</span>
+    </header>
+
+    <div class="layout">
+      <nav class="toc">
+        <strong>Overview</strong>
+        <a href="#scope">Scope</a>
+        <a href="#terms">Terms</a>
+        <a href="#why-sso">Why Google SSO</a>
+        <strong>Authentication</strong>
+        <a href="#boundary">Pluggable boundary</a>
+        <a href="#provider">Google SSO provider</a>
+        <a href="#flow">Sign-in flow</a>
+        <a href="#provisioning">Provisioning &amp; allowlist</a>
+        <a href="#sessions">Sessions (JWT)</a>
+        <strong>Authorization</strong>
+        <a href="#roles">Roles</a>
+        <a href="#scoping">Office scoping</a>
+        <a href="#enforcement">Enforcement</a>
+        <strong>Surface</strong>
+        <a href="#endpoints">Endpoints</a>
+        <a href="#firstadmin">First admin (bootstrap)</a>
+        <a href="#config">Configuration</a>
+        <a href="#datamodel">Data-model impact</a>
+        <strong>Quality</strong>
+        <a href="#security">Security notes</a>
+        <a href="#testing">TDD plan</a>
+        <a href="#layout">Folder layout</a>
+        <a href="#later">Out of scope</a>
+      </nav>
+
+      <main>
+        <section id="scope">
+          <h2>Scope of this slice</h2>
+          <p>This slice builds the <b>access-control foundation</b> that every admin API endpoint will
+            sit behind:</p>
+          <ul>
+            <li>A pluggable <b>authentication provider</b> — Google SSO (OpenID Connect) now, with
+              Keycloak addable later <em>without touching the rest of the app</em> (Keycloak is also
+              OpenID Connect, so it is the same kind of provider).</li>
+            <li><b>Account provisioning</b>: a domain whitelist plus an explicit allowlist (only people
+              with a <code>User</code> row may sign in) — we delegate <em>who you are</em> to Google but
+              keep control of <em>who gets in</em>.</li>
+            <li><b>Session tokens</b> (our own JWT access + refresh) issued after Google verifies identity.</li>
+            <li><b>Role-based access control</b>: the five roles, and the single-vs-all office scoping model.</li>
+            <li>The <code>/auth</code> endpoints (start sign-in, callback, refresh, me, logout) and a way
+              to bootstrap the first admin.</li>
+          </ul>
+          <p><b>Not</b> in this slice: the per-endpoint permissions for each entity's CRUD — those are
+            applied in the CRUD slice, which decorates its endpoints with the roles defined here.</p>
+          <div class="note">
+            <span class="label">Settled earlier</span>
+            Office scoping is <b>single office or all offices</b> (no multi-office) — a deliberate YAGNI
+            choice. A user is scoped to one office (<code>User.officeId</code> set) or is org-wide
+            (<code>officeId</code> null). Multi-office would become a <code>User</code>↔<code>Office</code>
+            join table if a real need appears.
+          </div>
+          <div class="note">
+            <span class="label">Changed from the previous draft</span>
+            This design replaces the earlier <b>Local (email + password)</b> provider with
+            <b>Google SSO</b>. Consequences: no password storage, so Argon2 hashing and the
+            <code>passwordHash</code> column are <b>dropped</b>; login becomes a redirect to Google
+            rather than a form; the first admin is bootstrapped by email, not by a seeded password.
+          </div>
+        </section>
+
+        <section id="terms">
+          <h2>Terms (plain English)</h2>
+          <table>
+            <tr><th>Term</th><th>Meaning</th></tr>
+            <tr><td><b>Authentication</b></td><td>Proving <em>who</em> you are (signing in). We delegate this to Google.</td></tr>
+            <tr><td><b>Authorization</b></td><td>Deciding <em>what</em> you're allowed to do once signed in. We own this (roles + office scope).</td></tr>
+            <tr><td><b>SSO</b> (Single Sign-On)</td><td>Signing in to our app using an identity you already have elsewhere (your Google account) instead of a new password.</td></tr>
+            <tr><td><b>OAuth 2.0</b></td><td>The industry-standard protocol for letting one site delegate sign-in to another. It's the "redirect to Google, come back with a code" dance.</td></tr>
+            <tr><td><b>OIDC</b> (OpenID Connect)</td><td>A thin identity layer on top of OAuth 2.0 that returns a verifiable <em>ID token</em> describing who signed in. Google speaks it; so does Keycloak — which is why both fit the same provider.</td></tr>
+            <tr><td><b>ID token</b></td><td>A signed JWT from Google stating who the user is. We verify its signature against Google's public keys, so we can trust its contents without asking Google again.</td></tr>
+            <tr><td><b>Claims</b></td><td>The fields inside the ID token: <code>email</code>, <code>email_verified</code>, <code>sub</code> (a stable per-user id), <code>hd</code> (the Google Workspace hosted domain), etc.</td></tr>
+            <tr><td><b>Redirect URI / callback</b></td><td>The URL on our server that Google sends the browser back to after sign-in, carrying a one-time authorization code.</td></tr>
+            <tr><td><b>state &amp; nonce</b></td><td>Random one-time values we generate per sign-in to defend against cross-site request forgery (CSRF) and token replay. We check they come back unchanged.</td></tr>
+            <tr><td><b>PKCE</b> (Proof Key for Code Exchange)</td><td>An extra OAuth safeguard: we send a hash on the way out and the matching secret on the way back, so a stolen authorization code is useless to an attacker.</td></tr>
+            <tr><td><b>JWT</b> (JSON Web Token)</td><td>A signed token. Google issues one to prove identity; <em>we</em> issue our own as the session token the admin portal sends on each request.</td></tr>
+            <tr><td><b>RBAC</b> (role-based access control)</td><td>Granting permissions by <em>role</em> (e.g. "office-manager") rather than per-user.</td></tr>
+          </table>
+        </section>
+
+        <section id="why-sso">
+          <h2>Why Google SSO</h2>
+          <ul>
+            <li><b>Every employee already has a Google account</b> (Workspace on <code>cermati.com</code>),
+              so there's no new password to create, remember, or reset.</li>
+            <li><b>Two-factor authentication is Google's job.</b> It's already enforced on the Workspace,
+              so we inherit strong authentication for free and never handle a second factor ourselves.</li>
+            <li><b>Nothing sensitive to store.</b> No password hashes, no reset flows, no credential-leak
+              surface on our side — the whole class of "we leaked passwords" incidents goes away.</li>
+            <li><b>Future-proof.</b> Keycloak (a likely future identity provider) is also OpenID Connect,
+              so moving to it later is a configuration change, not a rewrite.</li>
+          </ul>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="boundary">
+          <h2>The pluggable authentication boundary</h2>
+          <p>The hard requirement (from <code>CLAUDE.md</code>): a new auth provider must be addable
+            <b>without touching the rest of the app</b>. We get that by drawing a clean line between
+            <em>how you prove who you are</em> (provider-specific) and <em>everything downstream</em>
+            (shared): sessions, guards, RBAC all work on one normalized identity.</p>
+
+          <h3>The contract</h3>
+          <pre><code>// packages/auth — framework-agnostic (no NestJS, no TypeORM)
+
+/** The normalized identity every provider must produce. */
+interface AuthenticatedUser {
+  userId: string;
+  email: string;
+  role: Role;              // from @tunefour/shared-types
+  officeId: string | null; // null = all offices (org-wide role)
+}
+
+/**
+ * A pluggable sign-in mechanism. Redirect-based providers (OpenID Connect)
+ * implement a two-step flow: build an authorization URL, then handle the
+ * callback the identity provider redirects back to.
+ */
+interface AuthProvider {
+  readonly name: string;   // e.g. 'google-oidc', later 'keycloak-oidc'
+
+  /** Step 1 — where to send the browser to begin sign-in, plus the one-time
+   *  values we must remember for step 2 (state, nonce, PKCE verifier). */
+  createAuthorizationRequest(): AuthorizationRequest;
+
+  /** Step 2 — exchange the callback's code, verify the ID token, apply our
+   *  provisioning policy, and return the normalized identity (or null). */
+  completeSignIn(input: CallbackInput): Promise&lt;AuthenticatedUser | null&gt;;
+}</code></pre>
+          <p>Downstream code (token issuing, guards, RBAC) only ever sees <code>AuthenticatedUser</code>.
+            Swapping providers changes <em>only</em> which <code>AuthProvider</code> is wired in.</p>
+
+          <div class="why">
+            <span class="label">Why the interface changed shape from the Local draft</span>
+            Local auth was a single <code>authenticate(email, password)</code> call. OpenID Connect is a
+            <em>redirect</em> flow with two steps (send the browser to Google, then handle the code it
+            returns), so the contract now exposes those two steps. Everything <em>after</em> identity is
+            established — the <code>AuthenticatedUser</code>, sessions, guards, RBAC — is unchanged.
+          </div>
+
+          <h3>Why Google and Keycloak are one provider type</h3>
+          <p>Both are OpenID Connect. The generic OIDC mechanics (discovery, exchanging the code,
+            verifying the ID token) are identical; only the <b>issuer URL</b> and <b>client credentials</b>
+            differ. We'll use a well-maintained OIDC client library
+            (<a href="https://github.com/panva/node-openid-client"><code>openid-client</code></a>), which
+            reads each provider's <code>/.well-known/openid-configuration</code> and handles verification.
+            Pointing at Keycloak later means new config, not new code.</p>
+
+          <h3>Where code lives</h3>
+          <p><code>packages/auth</code> stays pure (no NestJS, no TypeORM) so it can't accidentally depend
+            on the server's database. The provider needs to look users up, so it depends on a small
+            <b>abstract user store</b> the server implements with TypeORM:</p>
+          <pre><code>// packages/auth
+interface UserAuthStore {
+  /** Allowlist lookup: returns the row only if this email is a provisioned user. */
+  findByEmail(email: string): Promise&lt;UserAuthRecord | null&gt;; // id, email, role, officeId, isActive
+}</code></pre>
+          <div class="why">
+            <span class="label">Why an abstract store, not the entity directly</span>
+            If <code>packages/auth</code> imported the TypeORM <code>User</code> entity, the shared
+            package would depend on the server app — the wrong direction, and it would break reuse.
+            The <code>UserAuthStore</code> interface keeps the package pure; the server provides a
+            TypeORM-backed implementation. Note it no longer exposes <code>passwordHash</code> — there
+            are no passwords.
+          </div>
+          <p>NestJS-specific pieces (guards, decorators, controllers) live in <code>apps/server</code>,
+            because they're tied to the framework and shouldn't be in the shared package.</p>
+        </section>
+
+        <section id="provider">
+          <h2>Google SSO provider (MVP)</h2>
+          <p>The <code>GoogleOidcAuthProvider</code> implements the two-step contract above:</p>
+          <ul>
+            <li><b><code>createAuthorizationRequest()</code></b> — generates a fresh <code>state</code>,
+              <code>nonce</code>, and PKCE verifier, and builds the Google authorization URL (asking only
+              for the <code>openid email profile</code> scopes — we don't need access to anyone's Gmail or
+              Drive, just their identity). Optionally pins <code>hd</code> to our domain as a hint.</li>
+            <li><b><code>completeSignIn()</code></b> — exchanges the one-time code for tokens, verifies the
+              ID token (signature, issuer, audience, expiry, and that the returned <code>nonce</code>
+              matches), then applies our provisioning policy (next section) to decide whether to admit the
+              user and with what role/office.</li>
+          </ul>
+          <p>Because it's built on generic OIDC, the <em>same class</em> can serve Keycloak later by
+            swapping the issuer and credentials (we may expose it as a configured instance rather than a
+            second class — decided at implementation time).</p>
+        </section>
+
+        <section id="flow">
+          <h2>The sign-in flow</h2>
+          <ol class="flow">
+            <li>User opens the admin portal and clicks <b>“Sign in with Google.”</b> The browser hits
+              <code>GET /auth/google</code> on our server.</li>
+            <li>Our server calls <code>createAuthorizationRequest()</code>, stashes the
+              <code>state</code>/<code>nonce</code>/PKCE verifier (short-lived, server-side), and
+              <b>redirects the browser to Google</b>.</li>
+            <li>Google authenticates the user — <b>password and 2FA happen entirely on Google</b> — and
+              asks for consent the first time.</li>
+            <li>Google redirects the browser back to <code>GET /auth/google/callback</code> with a one-time
+              authorization <code>code</code> (and the <code>state</code> we sent).</li>
+            <li>Our server verifies <code>state</code> matches, then <code>completeSignIn()</code> exchanges
+              the code for the <b>ID token</b> and verifies it (signature via Google's public keys,
+              issuer, audience, expiry, nonce).</li>
+            <li>Provisioning policy runs: the email's domain must be whitelisted <b>and</b> an active
+              <code>User</code> row must exist. If either fails → access denied.</li>
+            <li>On success we map the row to <code>AuthenticatedUser</code> and issue <b>our own</b> JWT
+              access + refresh tokens. The portal is now signed in and uses those for every API call.</li>
+          </ol>
+          <div class="note">
+            <span class="label">Why we issue our own session token</span>
+            After Google tells us who the user is, the rest of the app shouldn't care that Google was
+            involved. Our own short-lived JWT keeps every request uniform across providers (Google today,
+            Keycloak tomorrow) and means we never call Google again per-request — we only used it to
+            establish identity once, at login.
+          </div>
+        </section>
+
+        <section id="provisioning">
+          <h2>Provisioning &amp; allowlist</h2>
+          <p>Google will happily authenticate <em>any</em> Google account, so delegating authentication is
+            not the same as granting access. Two gates decide who actually gets in — both must pass:</p>
+          <table>
+            <tr><th>Gate</th><th>Rule</th><th>Why</th></tr>
+            <tr><td><b>Domain whitelist</b></td><td>The verified email's domain (and the <code>hd</code> claim) must be in a configured <b>list</b> of allowed domains (e.g. <code>cermati.com</code>). <code>email_verified</code> must be true.</td><td>Blocks personal Gmail and any outside account outright — defense in depth, independent of the row check.</td></tr>
+            <tr><td><b>User allowlist</b></td><td><code>UserAuthStore.findByEmail()</code> must return an <b>active</b> row.</td><td>Only people an admin has provisioned may sign in; the row also carries their <b>role</b> and <b>office</b>. No row ⇒ no access (we do <em>not</em> auto-create accounts).</td></tr>
+          </table>
+          <p>So an admin "adds a user" by creating a <code>User</code> row (email + role + office) in the
+            portal — no password, nothing to send them. The person just clicks "Sign in with Google" and
+            they're in, with exactly the role assigned. Removing access = deactivate or delete the row.</p>
+          <div class="note">
+            <span class="label">Domain whitelist is a list</span>
+            Config holds <code>AUTH_ALLOWED_DOMAINS</code> as a comma-separated list, so additional
+            Workspace domains (acquisitions, brands) can be allowed without code changes. Empty/misconfig
+            ⇒ deny all (fail closed).
+          </div>
+          <div class="why">
+            <span class="label">Matching by email, with a stable id captured for robustness</span>
+            For MVP we match the allowlist by <b>email</b> (simple, and Workspace emails are stable). On
+            first successful sign-in we also record Google's <code>sub</code> claim into
+            <code>User.externalId</code> — a stable per-account id that survives an email rename. We don't
+            match on it yet (YAGNI), but capturing it now means we can harden later without a data
+            backfill.
+          </div>
+        </section>
+
+        <section id="sessions">
+          <h2>Sessions — JWT access + refresh</h2>
+          <p>Unchanged from before: once a provider establishes identity, the <em>app</em> issues its own
+            tokens (uniform across providers):</p>
+          <table>
+            <tr><th>Token</th><th>Lifetime</th><th>Purpose</th></tr>
+            <tr><td>Access token</td><td>short (~15 min)</td><td>Sent on every API request; proves identity. Carries claims: <code>sub</code> (userId), <code>email</code>, <code>role</code>, <code>officeId</code>.</td></tr>
+            <tr><td>Refresh token</td><td>longer (~7 days)</td><td>Used only to get a new access token when it expires, so the user isn't bounced out every 15 minutes.</td></tr>
+          </table>
+          <ul>
+            <li>Signed with secrets from the environment (<code>JWT_ACCESS_SECRET</code>,
+              <code>JWT_REFRESH_SECRET</code> — already in <code>.env.example</code>).</li>
+            <li>The access token's claims let guards authorize <b>without a database hit</b> on each request.</li>
+            <li><b>Lifetimes are configurable</b>, not hard-coded: <code>JWT_ACCESS_TTL</code> (default
+              <code>15m</code>) and <code>JWT_REFRESH_TTL</code> (default <code>7d</code>). Values are
+              duration strings (<code>15m</code>, <code>12h</code>, <code>7d</code>) parsed by the JWT
+              library's <code>expiresIn</code>.</li>
+          </ul>
+          <div class="note">
+            <span class="label">Session renewal model (MVP)</span>
+            Refresh tokens use <b>absolute expiry</b>: when the refresh token reaches
+            <code>JWT_REFRESH_TTL</code>, the user signs in with Google again — usually a <b>silent
+            redirect</b>, since they still have a live Google session (no password/2FA prompt unless
+            Google re-challenges). Because MVP refresh tokens are <b>stateless</b> (no server-side
+            store), we choose absolute expiry over sliding/rotating: true rotation with stolen-token
+            reuse-detection needs the server-side revocation list, which is deferred (see Out of scope).
+          </div>
+          <div class="note">
+            <span class="label">Logout &amp; revocation</span>
+            For MVP, logout = the client discards its tokens (<code>POST /auth/logout</code> exists as the
+            portal's hook; it clears the session cookie/token). Server-side refresh-token revocation
+            (a denylist) is deferred (YAGNI) — noted in Out of scope. Short access-token lifetime limits
+            exposure in the meantime.
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="roles">
+          <h2>Roles</h2>
+          <p>The five roles from <code>@tunefour/shared-types</code>, with their intent. (Exact
+            per-endpoint permissions are applied in the CRUD slice; this is the capability overview.)
+            Roles are assigned on the <code>User</code> row — Google tells us <em>who</em>, we decide
+            <em>what they can do</em>.</p>
+          <table>
+            <tr><th>Role</th><th>Scope</th><th>Can do (intent)</th></tr>
+            <tr><td><b>super-admin</b></td><td>all offices</td><td>Everything, including managing users.</td></tr>
+            <tr><td><b>content-editor</b></td><td>all offices</td><td>Manage content org-wide: assets, playlists, schedules. Not users.</td></tr>
+            <tr><td><b>office-manager</b></td><td>one office</td><td>Manage their office's devices and schedules.</td></tr>
+            <tr><td><b>front-desk</b></td><td>one office</td><td><b>Only</b> send welcome messages to their own office.</td></tr>
+            <tr><td><b>viewer</b></td><td>all offices</td><td>Read-only.</td></tr>
+          </table>
+          <div class="note">
+            <span class="label">Hard rule from CLAUDE.md</span>
+            <code>front-desk</code> can <b>only</b> send welcome messages, and <b>only</b> to its own
+            office. This is enforced by role (what endpoints) + office scope (which office).
+          </div>
+        </section>
+
+        <section id="scoping">
+          <h2>Office scoping</h2>
+          <p>A user's reach is one of two cases, read straight off <code>User.officeId</code>:</p>
+          <table>
+            <tr><th><code>officeId</code></th><th>Meaning</th><th>Typical roles</th></tr>
+            <tr><td>a value</td><td>Scoped to that <b>one</b> office</td><td>office-manager, front-desk</td></tr>
+            <tr><td><code>null</code></td><td><b>All</b> offices (org-wide)</td><td>super-admin, content-editor, viewer</td></tr>
+          </table>
+          <p>So authorization is two independent checks: <b>role</b> decides <em>what kind</em> of
+            action is allowed; <b>office scope</b> decides <em>which office's</em> resources it may
+            touch.</p>
+        </section>
+
+        <section id="enforcement">
+          <h2>How it's enforced</h2>
+          <p>Two layers, because they answer different questions:</p>
+          <table>
+            <tr><th>Check</th><th>Where</th><th>Why there</th></tr>
+            <tr><td>Is the request authenticated?</td><td><b>Global <code>JwtAuthGuard</code></b> (opt out with <code>@Public()</code> on the login/callback routes)</td><td>Uniform; validates our access token and attaches <code>AuthenticatedUser</code> to the request.</td></tr>
+            <tr><td>Does the role allow this endpoint?</td><td><b><code>RolesGuard</code></b> (opt in with <code>@Roles(...)</code>)</td><td>Coarse gate — a guard can decide this from the role in the token alone.</td></tr>
+            <tr><td>Does the resource belong to the user's office?</td><td><b>Service layer</b> (a small <code>assertOfficeAccess()</code> helper)</td><td>Fine-grained — the guard can't know a resource's office without loading it, so the service checks after fetching.</td></tr>
+          </table>
+          <pre><code>// office-scope helper (service layer)
+function assertOfficeAccess(user: AuthenticatedUser, resourceOfficeId: string): void {
+  if (user.officeId === null) return;          // org-wide: any office
+  if (user.officeId === resourceOfficeId) return; // scoped: only own office
+  throw new ForbiddenException();
+}</code></pre>
+          <p>Supporting decorators (all in <code>apps/server</code>): <code>@Public()</code> (skip auth),
+            <code>@Roles(...)</code> (allowed roles), <code>@CurrentUser()</code> (inject the
+            <code>AuthenticatedUser</code> into a handler).</p>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="endpoints">
+          <h2>Endpoints (this slice)</h2>
+          <table>
+            <tr><th>Method + path</th><th>Auth</th><th>Purpose</th></tr>
+            <tr><td><code>GET /auth/google</code></td><td>public</td><td>Begin sign-in: stash state/nonce/PKCE, redirect the browser to Google.</td></tr>
+            <tr><td><code>GET /auth/google/callback</code></td><td>public (valid state + code)</td><td>Google redirects here. Verify, provision-check, issue our JWTs, hand the session back to the portal.</td></tr>
+            <tr><td><code>POST /auth/refresh</code></td><td>public (valid refresh token)</td><td>{ refreshToken } → { accessToken }</td></tr>
+            <tr><td><code>GET /auth/me</code></td><td>authenticated</td><td>→ the current <code>AuthenticatedUser</code></td></tr>
+            <tr><td><code>POST /auth/logout</code></td><td>authenticated</td><td>Clear the client session (discard tokens). No server denylist in MVP.</td></tr>
+          </table>
+          <p>The callback inputs are validated before use; the one-time <code>state</code> is checked
+            against what we stored, and a mismatch is rejected.</p>
+          <div class="note">
+            <span class="label">How the token reaches the portal</span>
+            Exactly how the callback returns the session to the Next.js portal (an <code>HttpOnly</code>
+            cookie vs. a short-lived redirect hand-off) is a small implementation detail settled when we
+            build the portal login; an <code>HttpOnly</code> cookie for the session is the likely default.
+          </div>
+        </section>
+
+        <section id="firstadmin">
+          <h2>First admin (bootstrap)</h2>
+          <p>Chicken-and-egg: nobody can sign in without a <code>User</code> row, but nobody can create
+            rows without first signing in as an admin. We break it with a <b>config-driven seed</b> — not
+            a hardcoded email list in source:</p>
+          <ul>
+            <li>An env var <code>SEED_SUPER_ADMIN_EMAILS</code> holds a comma-separated list
+              (e.g. <code>oby@cermati.com,ops@cermati.com</code>).</li>
+            <li>A one-off command <code>pnpm --filter @tunefour/server seed:admin</code> reads the list and
+              <b>upserts</b> each email as a <code>super-admin</code> row
+              (<code>officeId = null</code>, <code>isActive = true</code>, no password). Idempotent and
+              safe to re-run.</li>
+            <li>Those people then sign in via Google and manage everyone else through the portal. The env
+              list can be emptied once real admins exist.</li>
+          </ul>
+          <div class="why">
+            <span class="label">Why a seed command, not an env check inside login</span>
+            The sign-in path stays pure — it only ever asks "is this email an active <code>User</code>
+            row?" There is no "if email in env then grant super-admin" branch in the hot auth path, so the
+            <code>User</code> table is the single source of truth for who may enter. The env list is just
+            a bootstrap input consumed once.
+          </div>
+        </section>
+
+        <section id="config">
+          <h2>Configuration</h2>
+          <p>New environment variables this slice introduces (added to <code>.env.example</code>; real
+            values come from Google Cloud Console → APIs &amp; Services → Credentials, and are stored in
+            Secret Manager in GCP):</p>
+          <table>
+            <tr><th>Variable</th><th>Meaning</th></tr>
+            <tr><td><code>OIDC_ISSUER</code></td><td>The provider's issuer URL. <code>https://accounts.google.com</code> now; a Keycloak realm URL later.</td></tr>
+            <tr><td><code>OIDC_CLIENT_ID</code></td><td>The OAuth client id from Google Cloud Console.</td></tr>
+            <tr><td><code>OIDC_CLIENT_SECRET</code></td><td>The OAuth client secret (never committed; from Secret Manager in GCP).</td></tr>
+            <tr><td><code>OIDC_REDIRECT_URI</code></td><td>Our callback URL, e.g. <code>https://admin.tunefour.…/auth/google/callback</code>. Must be registered in Google Console.</td></tr>
+            <tr><td><code>AUTH_ALLOWED_DOMAINS</code></td><td>Comma-separated whitelist of allowed email domains, e.g. <code>cermati.com</code>. Empty ⇒ deny all.</td></tr>
+            <tr><td><code>SEED_SUPER_ADMIN_EMAILS</code></td><td>Comma-separated bootstrap super-admins (see above).</td></tr>
+            <tr><td><code>JWT_ACCESS_SECRET</code> / <code>JWT_REFRESH_SECRET</code></td><td>Session-token signing secrets (already present).</td></tr>
+            <tr><td><code>JWT_ACCESS_TTL</code> / <code>JWT_REFRESH_TTL</code></td><td>Token lifetimes as duration strings. Defaults <code>15m</code> / <code>7d</code>.</td></tr>
+          </table>
+        </section>
+
+        <section id="datamodel">
+          <h2>Data-model impact</h2>
+          <p>Switching to SSO changes the <code>User</code> entity. These are code changes applied
+            <em>at implementation time</em> (gated by approval of this doc); noting them here so the design
+            is complete:</p>
+          <table>
+            <tr><th>Change</th><th>Detail</th></tr>
+            <tr><td class="no"><b>Drop</b> <code>passwordHash</code></td><td>No passwords stored anywhere. Argon2 and the password helper are removed with it.</td></tr>
+            <tr><td class="yes"><b>Add</b> <code>externalId</code> (nullable text)</td><td>Stores Google's <code>sub</code> claim, captured on first sign-in. For robustness/audit; matching stays by email in MVP.</td></tr>
+            <tr><td>Keep</td><td><code>email</code>, <code>role</code>, <code>officeId</code> (nullable), <code>isActive</code> — these drive the allowlist and RBAC.</td></tr>
+          </table>
+          <p>This is one small migration on top of the existing schema. <code>docs/phase1-data-model.html</code>
+            and the <code>User</code> entity/migration will be updated to match when we implement.</p>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="security">
+          <h2>Security notes</h2>
+          <ul>
+            <li><b>No passwords at all</b> on our side — the entire password-storage/leak surface is gone.
+              Authentication strength (including 2FA) is Google's responsibility.</li>
+            <li><b>ID token fully verified</b>: signature against Google's published keys, plus
+              <code>iss</code>, <code>aud</code>, <code>exp</code>, and <code>nonce</code> checks. We never
+              trust token contents we haven't verified.</li>
+            <li><b>CSRF/replay protection</b> via <code>state</code> + <code>nonce</code> + PKCE on the
+              OAuth flow.</li>
+            <li><b>Fail closed on provisioning</b>: unknown domain, unverified email, or missing/inactive
+              <code>User</code> row ⇒ denied. We never auto-create accounts.</li>
+            <li><b>Least privilege at Google</b>: we request only <code>openid email profile</code> — no
+              Gmail, Drive, or other data access.</li>
+            <li><b>No account enumeration</b>: a denied sign-in returns the same generic error whether the
+              domain, the row, or the active flag was the cause.</li>
+            <li><b>Secrets from the environment</b> (never committed); separate access/refresh secrets;
+              client secret in Secret Manager in GCP.</li>
+            <li><b>Short access-token lifetime</b> limits the damage of a leaked session token.</li>
+          </ul>
+        </section>
+
+        <section id="testing">
+          <h2>TDD plan</h2>
+          <p>This slice is mostly logic, so it's written test-first. Unit tests mock the OIDC client and
+            the user store (no network to Google, no database):</p>
+          <table>
+            <tr><th>Unit</th><th>Cases</th></tr>
+            <tr><td>GoogleOidcAuthProvider · request</td><td><code>createAuthorizationRequest()</code> returns a URL plus fresh state/nonce/PKCE verifier; successive calls differ.</td></tr>
+            <tr><td>GoogleOidcAuthProvider · callback</td><td>valid verified token + whitelisted domain + active row → identity; unverified email → null; non-whitelisted domain → null; no <code>User</code> row → null; inactive row → null; bad signature/nonce → null.</td></tr>
+            <tr><td>AuthService (tokens)</td><td>successful sign-in issues access + refresh; refresh with a valid token → new access; invalid/expired refresh → error.</td></tr>
+            <tr><td>RolesGuard</td><td>allowed role passes; other roles are rejected; no <code>@Roles</code> → allowed.</td></tr>
+            <tr><td>assertOfficeAccess</td><td>org-wide user → any office allowed; scoped user → own office allowed, other office rejected.</td></tr>
+            <tr><td>seed:admin</td><td>creates missing super-admins from the env list; re-run is idempotent (no duplicates).</td></tr>
+          </table>
+          <p>These behaviours double as the documentation of the rules above. A thin integration check
+            (stubbed OIDC callback → call <code>/auth/me</code> with the issued token) confirms the wiring
+            against a running app.</p>
+        </section>
+
+        <section id="layout">
+          <h2>Folder layout</h2>
+          <div class="card">
+            <pre>packages/auth/src/            <span class="cm"># pure: no NestJS, TypeORM, or network</span>
+  auth-provider.interface.ts   <span class="cm"># AuthProvider, AuthenticatedUser, OidcClient, UserAuthStore, ...</span>
+  provisioning.ts              <span class="cm"># decideProvisioning() — domain + allowlist policy (pure)</span>
+  crypto.ts                    <span class="cm"># state/nonce tokens + PKCE challenge helpers</span>
+  google-oidc.provider.ts      <span class="cm"># GoogleOidcAuthProvider (OIDC client + provisioning)</span>
+  index.ts
+
+apps/server/src/auth/
+  auth.module.ts               <span class="cm"># wires provider + JWT + two global guards</span>
+  auth.service.ts              <span class="cm"># OAuth orchestration: transaction token + state check</span>
+  auth.controller.ts           <span class="cm"># /auth/google, /callback, /refresh, /me, /logout</span>
+  auth.constants.ts            <span class="cm"># cookie names + provider DI token</span>
+  tokens/
+    auth-tokens.service.ts     <span class="cm"># issues / verifies access + refresh JWTs</span>
+  oidc/
+    google-oidc.adapter.ts     <span class="cm"># OidcClient over openid-client (discovery, exchange)</span>
+  user-auth.store.ts           <span class="cm"># UserAuthStore backed by the TypeORM User repo</span>
+  guards/
+    jwt-auth.guard.ts
+    roles.guard.ts
+  decorators/
+    public.decorator.ts
+    roles.decorator.ts
+    current-user.decorator.ts
+  rbac/
+    office-scope.ts            <span class="cm"># assertOfficeAccess()</span>
+  seed-super-admins.ts         <span class="cm"># pure seed logic (unit-tested)</span>
+  seed-admin.ts                <span class="cm"># seed:admin CLI (reads SEED_SUPER_ADMIN_EMAILS)</span></pre>
+          </div>
+        </section>
+
+        <section id="later">
+          <h2>Out of scope (later phases)</h2>
+          <ul>
+            <li><b>Keycloak provider</b> — now mostly a configuration change (same OIDC code), not a
+              rewrite. Flip <code>OIDC_ISSUER</code> + credentials when the time comes.</li>
+            <li><b>Refresh-token revocation list</b> (server-side logout / "log out everywhere").</li>
+            <li><b>Multi-office scoping</b> (the <code>User</code>↔<code>Office</code> join table) — only if a real need appears.</li>
+            <li><b>Per-endpoint CRUD permissions</b> — applied in the next slice using the roles defined here.</li>
+            <li><b>Matching the allowlist by <code>externalId</code></b> instead of email — the column is
+              captured now; switch the match later if email renames ever cause trouble.</li>
+            <li><b>Local password fallback / break-glass</b> — intentionally not built; access depends on
+              Google being reachable.</li>
+          </ul>
+          <div class="links">
+            <a href="https://developers.google.com/identity/openid-connect/openid-connect">Google OpenID Connect</a>
+            <a href="https://github.com/panva/node-openid-client">openid-client library</a>
+            <a href="https://docs.nestjs.com/security/authentication">NestJS authentication</a>
+            <a href="https://docs.nestjs.com/security/authorization">NestJS authorization (RBAC)</a>
+          </div>
+        </section>
+
+        <div class="foot">
+          Tunefour · Phase 1 auth &amp; RBAC design · pairs with <code>docs/phase1-data-model.html</code>
+          and <code>IMPLEMENTATION_PLAN.md</code> Phase 1
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

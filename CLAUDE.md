@@ -38,7 +38,7 @@ apps/admin      Next.js admin portal
 apps/frontdesk  Next.js front-desk view (scoped welcome-message sender)
 apps/client     Electron kiosk + Windows watchdog/provisioning
 packages/shared-types   DTOs + manifest schema shared across apps
-packages/auth           AuthProvider interface + Local (+ later OIDC/Keycloak)
+packages/auth           AuthProvider interface + Google SSO (OIDC) (+ later Keycloak)
 packages/config         shared lint/tsconfig/build config
 infra/          IaC (Terraform), Dockerfiles, deployment manifests
 ```
@@ -47,7 +47,7 @@ infra/          IaC (Terraform), Dockerfiles, deployment manifests
 
 **Before writing code for any new phase, feature, or non-trivial change, first write a
 technical design document in HTML under `docs/`** and get it reviewed/approved before
-implementing. Match the style of the existing docs (e.g. `docs/tech-stack.html`). The doc
+implementing. Match the style of the existing docs (e.g. `docs/introduction.html`). The doc
 should cover the approach, key decisions/trade-offs, data/interfaces affected, and links to
 references. Add a row for each new doc to `docs/README.md`. Skip this only for trivial edits
 (typos, formatting, dependency bumps) where there's nothing to design.
@@ -55,8 +55,10 @@ references. Add a row for each new doc to `docs/README.md`. Skip this only for t
 ## Conventions & things to respect
 
 - **Auth is pluggable.** Admin auth goes through the `AuthProvider` interface in
-  `packages/auth`. MVP uses `LocalAuthProvider` (Argon2 + JWT). Keycloak/OIDC must be
-  addable as a new provider **without touching the rest of the app** — keep it decoupled.
+  `packages/auth`. MVP delegates authentication to **Google SSO (OpenID Connect)** — no
+  passwords of our own; we keep a domain + user allowlist and issue our own JWT session.
+  Keycloak (also OIDC) must be addable **without touching the rest of the app** — keep it
+  decoupled. See `docs/phase1-auth-rbac.html`.
 - **ORM is TypeORM, Data Mapper pattern.** Entities are plain-TS classes; persistence goes
   through injected repositories (`@InjectRepository(...)`), not `BaseEntity`/Active Record.
   Keep business logic in services and data access in repositories so services stay unit-testable
